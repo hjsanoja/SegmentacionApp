@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>PHQ Matrix v15.3 (GitHub)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+    
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    <!-- LocalForage for High Capacity Storage -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+    
+    <style>
+        /* PROTECCIÓN DE INTERFAZ */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f8fafc; 
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        /* --- MATRIX GRID SYSTEM --- */
+        .matrix-grid {
+            display: grid;
+            grid-template-columns: auto 1fr 1fr 1fr;
+            grid-template-rows: auto 1fr 1fr 1fr;
+            gap: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .matrix-grid.expanded {
+            grid-template-columns: auto 1fr 1fr 1fr 200px;
+            grid-template-rows: auto 1fr 1fr 1fr auto;
+        }
+
+        .matrix-header-col { text-align: center; font-weight: 600; color: #64748b; padding-bottom: 8px; font-size: 0.85rem; text-transform: uppercase; }
+        .matrix-header-row { display: flex; align-items: center; justify-content: center; font-weight: 600; color: #64748b; writing-mode: vertical-rl; transform: rotate(180deg); font-size: 0.85rem; text-transform: uppercase; gap: 4px; }
+        .summary-header-title { font-weight: 800; color: #64748b; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; text-align: center; padding: 8px; display: flex; align-items: flex-end; justify-content: center; height: 100%; }
+        
+        .matrix-cell {
+            background: white; border: 1px solid #e2e8f0; border-radius: 16px;
+            padding: 16px; display: flex; flex-direction: column; 
+            cursor: pointer; position: relative; min-height: 220px;
+            overflow: visible; box-sizing: border-box; opacity: 0; 
+            animation: fadePopIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        .matrix-cell.pulse-active {
+            animation: fadePopIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, pulse-glow 2s infinite 0.6s;
+        }
+        
+        @keyframes fadePopIn { 0% { opacity: 0; transform: scale(0.9) translateY(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+        @keyframes pulse-glow { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); border-color: #e2e8f0; } 50% { border-color: #3b82f6; } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); border-color: #e2e8f0; } }
+
+        .matrix-cell:hover { transform: translateY(-5px) !important; box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.15); border-color: #94a3b8 !important; z-index: 20; }
+        
+        .cell-tooltip {
+            position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%) translateY(-10px);
+            background: #1e293b; color: white; padding: 8px 12px; border-radius: 8px; font-size: 0.75rem;
+            width: max-content; max-width: 180px; pointer-events: none; opacity: 0; transition: opacity 0.2s, transform 0.2s;
+            z-index: 50; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+        }
+        .cell-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -6px; border-width: 6px; border-style: solid; border-color: #1e293b transparent transparent transparent; }
+        .matrix-cell:hover .cell-tooltip { opacity: 1; transform: translateX(-50%) translateY(-5px); }
+
+        .matrix-cell-summary { background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; justify-content: center; min-height: 220px; color: #64748b; }
+        .summary-element { display: none; }
+        .summary-element.show { display: flex; }
+        
+        .matrix-cell.theme-red.selected { background-color: #fef2f2; border-color: #ef4444; box-shadow: 0 0 0 4px #fee2e2, inset 0 0 0 1px #ef4444; }
+        .matrix-cell.theme-yellow.selected { background-color: #fefce8; border-color: #eab308; box-shadow: 0 0 0 4px #fef08a, inset 0 0 0 1px #eab308; }
+        .matrix-cell.theme-green.selected { background-color: #f0fdf4; border-color: #22c55e; box-shadow: 0 0 0 4px #bbf7d0, inset 0 0 0 1px #22c55e; }
+        .matrix-cell.theme-blue.selected { background-color: #eff6ff; border-color: #3b82f6; box-shadow: 0 0 0 4px #bfdbfe, inset 0 0 0 1px #3b82f6; }
+        .matrix-cell.theme-slate.selected { background-color: #f8fafc; border-color: #64748b; box-shadow: 0 0 0 4px #e2e8f0, inset 0 0 0 1px #64748b; }
+
+        .stats-drawer { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, opacity 0.3s ease-out; opacity: 0; }
+        .stats-drawer.open { max-height: 50px; opacity: 1; margin-top: 8px; padding-top: 8px; border-top: 1px dashed #e2e8f0; }
+
+        .checkbox-item { display: flex; align-items: center; padding: 6px 8px; cursor: pointer; border-radius: 4px; }
+        .checkbox-item:hover { background-color: #f1f5f9; }
+        .checkbox-item input { margin-right: 8px; accent-color: #2563eb; }
+
+        .modal-badge { padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; display: inline-flex; align-items: center; gap: 4px; }
+        .badge-pot-A { background: #e9d5ff; color: #6b21a8; }
+        .badge-pot-B { background: #f1f5f9; color: #475569; }
+        .badge-pot-C { background: #f8fafc; color: #94a3b8; border: 1px solid #e2e8f0; }
+        .badge-loy-A { background: #dcfce7; color: #15803d; }
+        .badge-loy-B { background: #fef9c3; color: #854d0e; }
+        .badge-loy-C { background: #fee2e2; color: #991b1b; }
+        .badge-gap { background-color: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; font-family: monospace; font-weight: 700; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; }
+
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #3b82f6; cursor: pointer; margin-top: -6px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #cbd5e1; border-radius: 2px; }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; }
+            .matrix-cell { border: 1px solid #000; break-inside: avoid; }
+        }
+        
+        .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .file-drop-area { position: relative; display: flex; align-items: center; padding: 20px; border: 2px dashed #cbd5e1; border-radius: 12px; transition: 0.2s; background: #f8fafc; }
+        .file-drop-area:hover { border-color: #3b82f6; background: #eff6ff; }
+        .fake-btn { background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px; margin-right: 15px; font-size: 12px; font-weight: bold; text-transform: uppercase; color: #64748b; }
+        .file-msg { font-size: 12px; color: #94a3b8; }
+        .file-input { position: absolute; left: 0; top: 0; height: 100%; width: 100%; cursor: pointer; opacity: 0; }
+        
+        .kpi-card { transition: all 0.2s; }
+        .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+
+        .filter-group-label { font-size: 0.65rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; margin-left: 2px; }
+        .filter-select { font-size: 0.8rem; padding: 6px; border-radius: 6px; border: 1px solid #cbd5e1; width: 100%; background-color: #f8fafc; }
+
+        .icon-inline { font-size: 12px; vertical-align: middle; margin-right: 2px; margin-bottom: 2px; }
+        .letter-display { font-family: 'Nunito', sans-serif; font-weight: 900; letter-spacing: 0; }
+
+        /* Toast Notification */
+        #toast {
+            visibility: hidden; min-width: 250px; background-color: #1e293b; color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; z-index: 100; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 14px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); opacity: 0; transition: opacity 0.3s, bottom 0.3s;
+        }
+        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+    </style>
+</head>
+<body class="text-slate-800">
+
+<!-- Top Navigation -->
+<nav class="bg-slate-900 text-white shadow-lg fixed w-full z-50 no-print">
+    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="bg-blue-600 p-1.5 rounded flex items-center justify-center">
+                <span class="material-symbols-outlined text-white">ssid_chart</span>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg leading-tight">PHQ <span class="font-light text-blue-300">Intel 15.3</span></h1>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 md:gap-3">
+            <!-- New Reset Button -->
+            <button class="hidden md:flex items-center gap-1 text-slate-300 hover:text-white text-sm font-medium transition" onclick="clearSessionData()">
+                <span class="material-symbols-outlined text-lg">restart_alt</span> Nueva Carga
+            </button>
+            <div class="h-6 w-px bg-slate-700 hidden md:block"></div>
+            <button class="text-slate-300 hover:text-white flex items-center gap-1 text-sm font-medium transition" onclick="document.getElementById('configModal').classList.remove('hidden')">
+                <span class="material-symbols-outlined text-lg">settings</span> <span class="hidden sm:inline">Config</span>
+            </button>
+            
+            <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-sm font-bold shadow-lg shadow-blue-900/50 transition flex items-center gap-2" onclick="document.getElementById('uploadModal').classList.remove('hidden')">
+                <span class="material-symbols-outlined">upload</span> <span class="hidden sm:inline">Datos</span>
+            </button>
+        </div>
+    </div>
+</nav>
+
+<!-- Toast Notification -->
+<div id="toast">Notificación</div>
+
+<!-- Main Content -->
+<main class="max-w-7xl mx-auto px-4 pt-24 pb-12">
+    
+    <!-- Loading Overlay for Restoration -->
+    <div id="restoringSession" class="hidden text-center py-8">
+        <span class="material-symbols-outlined text-4xl text-blue-500 animate-spin">sync</span>
+        <p class="text-slate-500 text-sm mt-2 font-medium">Restaurando sesión segura...</p>
+    </div>
+
+    <!-- Analysis Tools Bar -->
+    <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl mb-4 flex flex-wrap gap-8 items-center shadow-sm no-print animate-fade-in hidden" id="analysisTools">
+        <div class="flex items-center gap-2 text-slate-500 mr-2 border-r border-slate-200 pr-4">
+            <span class="material-symbols-outlined">tune</span>
+            <span class="text-xs font-bold uppercase">Umbrales</span>
+        </div>
+
+        <!-- Sliders Adopción (Eje X) -->
+        <div class="flex flex-col gap-1 w-full sm:w-64">
+            <div class="flex justify-between text-[10px] font-bold text-slate-500 uppercase mb-1">
+                <span>Adopción (Loyalty)</span>
+            </div>
+            <div class="flex justify-between text-[10px] font-bold text-slate-400">
+                <span>Bajo/Medio: <span id="lblThLow" class="text-blue-600">33%</span></span>
+            </div>
+            <input type="range" min="10" max="50" value="33" id="sliderLow" oninput="updateThresholds()">
+            
+            <div class="flex justify-between text-[10px] font-bold text-slate-400 mt-1">
+                <span>Medio/Alto: <span id="lblThHigh" class="text-green-600">65%</span></span>
+            </div>
+            <input type="range" min="51" max="90" value="65" id="sliderHigh" oninput="updateThresholds()">
+        </div>
+
+        <div class="h-20 w-px bg-slate-200 hidden sm:block"></div>
+
+        <!-- Sliders Potencialidad (Eje Y) -->
+        <div class="flex flex-col gap-1 w-full sm:w-64">
+             <div class="flex justify-between text-[10px] font-bold text-slate-500 uppercase mb-1">
+                <span>Potencialidad (Volumen)</span>
+            </div>
+            <div class="flex justify-between text-[10px] font-bold text-slate-400">
+                <span>Alto/Medio (A/B): <span id="lblPotLow" class="text-purple-600">33%</span></span>
+            </div>
+            <input type="range" min="10" max="50" value="33" id="sliderPotLow" oninput="updateThresholds()">
+            
+            <div class="flex justify-between text-[10px] font-bold text-slate-400 mt-1">
+                <span>Medio/Bajo (B/C): <span id="lblPotHigh" class="text-slate-600">66%</span></span>
+            </div>
+            <input type="range" min="51" max="90" value="66" id="sliderPotHigh" oninput="updateThresholds()">
+        </div>
+        
+        <div class="flex-1"></div>
+        <div class="text-[10px] text-slate-400 max-w-[150px] text-right leading-tight italic">
+            Ajusta los sliders para recalcular la matriz en tiempo real.
+        </div>
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 mb-6 flex flex-col gap-4 no-print animate-fade-in hidden" id="filterBar">
+        <div class="flex justify-between items-center border-b border-slate-100 pb-2 mb-1">
+            <div class="flex items-center gap-2 text-slate-600">
+                <div class="bg-slate-100 p-1.5 rounded-full"><span class="material-symbols-outlined text-lg">filter_alt</span></div>
+                <span class="font-bold text-sm uppercase tracking-wide">Filtros</span>
+            </div>
+            <!-- Global Search (Fixed: No Icon, Dual Search) -->
+            <div class="w-72">
+                <input type="text" id="globalSearch" placeholder="Buscar por Nombre o Matrícula..." class="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 outline-none transition" onkeyup="renderTable()">
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- 1. Market Multi-Select -->
+            <div class="relative">
+                <div class="filter-group-label">Mercados (Multi)</div>
+                <button class="w-full bg-slate-50 border border-slate-300 text-slate-700 text-xs font-semibold rounded-lg p-2 text-left flex justify-between items-center" id="marketDropdownBtn" onclick="toggleMarketDropdown()">
+                    <span id="marketBtnText">Todos</span>
+                    <span class="material-symbols-outlined text-sm">arrow_drop_down</span>
+                </button>
+                <div class="hidden absolute top-full left-0 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto p-2" id="marketDropdownPanel">
+                    <div class="checkbox-item border-b border-slate-100 mb-1 pb-1">
+                        <input checked="" id="selectAllMarkets" onchange="toggleAllMarkets(this.checked)" type="checkbox">
+                        <span class="text-xs font-bold text-blue-600">Seleccionar Todos</span>
+                    </div>
+                    <div class="space-y-1" id="marketListContainer"></div>
+                </div>
+            </div>
+
+            <!-- 2. Product Filter -->
+            <div>
+                <div class="filter-group-label">Producto (PHQ)</div>
+                <select class="filter-select" id="filterProduct" onchange="applyFilters()">
+                    <option value="all">Todos mis productos</option>
+                </select>
+            </div>
+
+            <!-- 3. Fichero Filter -->
+            <div>
+                <div class="filter-group-label">Estado Fichero</div>
+                <select class="filter-select" id="filterFichero" onchange="applyFilters()">
+                    <option value="all">Todos</option>
+                    <option value="fichado">✅ Fichados</option>
+                    <option value="nofichado">❌ No Fichados</option>
+                </select>
+            </div>
+
+            <!-- 4. Region -->
+            <div>
+                <div class="filter-group-label">Región</div>
+                <select class="filter-select" id="filterRegion" onchange="applyFilters()">
+                    <option value="all">Todas</option>
+                </select>
+            </div>
+
+             <!-- 5. Especialidad -->
+             <div>
+                <div class="filter-group-label">Especialidad</div>
+                <select class="filter-select" id="filterSpec" onchange="applyFilters()">
+                    <option value="all">Todas</option>
+                </select>
+            </div>
+
+            <!-- 6. Molecula -->
+            <div>
+                <div class="filter-group-label">Molécula</div>
+                <select class="filter-select" id="filterMolecule" onchange="applyFilters()">
+                    <option value="all">Todas</option>
+                </select>
+            </div>
+
+            <!-- 7. Clase Terapeutica -->
+            <div>
+                <div class="filter-group-label">Clase Terapéutica</div>
+                <select class="filter-select" id="filterClass" onchange="applyFilters()">
+                    <option value="all">Todas</option>
+                </select>
+            </div>
+
+             <!-- 8. Generico -->
+             <div>
+                <div class="filter-group-label">Genérico</div>
+                <select class="filter-select" id="filterGeneric" onchange="applyFilters()">
+                    <option value="all">Todos</option>
+                </select>
+            </div>
+
+            <!-- 9. Laboratorio -->
+            <div>
+                <div class="filter-group-label">Laboratorio</div>
+                <select class="filter-select" id="filterLab" onchange="applyFilters()">
+                    <option value="all">Todos</option>
+                </select>
+            </div>
+
+            <!-- Exports (Colspan to fill) -->
+            <div class="flex gap-2 items-end justify-end lg:col-span-3">
+                <button class="flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg text-xs font-semibold transition border border-green-200" onclick="exportExcel()">
+                    <span class="material-symbols-outlined text-sm">table_view</span> Excel
+                </button>
+                <button class="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-xs font-semibold transition border border-red-200" onclick="exportPDF()">
+                    <span class="material-symbols-outlined text-sm">picture_as_pdf</span> PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="flex flex-col items-center justify-center py-20 text-center" id="emptyState">
+        <div class="bg-white p-10 rounded-3xl shadow-xl max-w-lg w-full border border-slate-100">
+            <div class="w-20 h-20 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span class="material-symbols-outlined text-5xl">analytics</span>
+            </div>
+            <h2 class="text-3xl font-bold text-slate-800 mb-2">Análisis Matricial CloseUp</h2>
+            <p class="text-slate-500 mb-8 text-sm leading-relaxed">Sube tu archivo de auditoría con los nuevos campos (Medico, Matricula, Mercado, Px_Product, etc.) para comenzar.</p>
+            <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition shadow-lg shadow-blue-200 flex items-center justify-center gap-2" onclick="document.getElementById('uploadModal').classList.remove('hidden')">
+                <span class="material-symbols-outlined">upload_file</span> Cargar Datos
+            </button>
+            <button class="mt-4 text-sm text-slate-400 hover:text-blue-600 underline" onclick="loadDemo()">Cargar Demo CloseUp</button>
+        </div>
+    </div>
+
+    <!-- Dashboard Content -->
+    <div class="hidden animate-fade-in" id="dashboardContent">
+        
+        <!-- INTELLIGENCE ROW -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Competitor Radar -->
+            <div class="bg-white p-5 rounded-xl border-l-4 border-red-500 shadow-sm relative overflow-hidden col-span-1">
+                <div class="flex justify-between items-start mb-3">
+                    <h3 class="font-bold text-slate-700 text-sm uppercase tracking-wide">Amenaza Principal</h3>
+                    <span class="material-symbols-outlined text-red-200 text-3xl">warning</span>
+                </div>
+                <div id="topCompetitorContainer">
+                    <h2 class="text-2xl font-bold text-slate-800" id="topCompName">--</h2>
+                    <p class="text-sm text-slate-500 mt-1"><span class="font-mono font-bold text-red-600" id="topCompRx">0</span> Rx en la muestra actual</p>
+                </div>
+            </div>
+
+            <!-- Market Composition Bar -->
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm col-span-2 flex flex-col justify-center cursor-pointer group hover:border-blue-300 transition" onclick="showMarketDetails()">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-bold text-slate-700 text-sm uppercase tracking-wide">Composición del Mercado</h3>
+                    <span class="text-xs text-blue-500 bg-blue-50 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition flex items-center gap-1">
+                        <span class="material-symbols-outlined text-xs">info</span> Ver detalle
+                    </span>
+                </div>
+                <div class="w-full h-8 flex rounded-full overflow-hidden mb-2 bg-slate-100 shadow-inner">
+                    <div class="bg-blue-600 h-full flex items-center justify-center text-[10px] font-bold text-white transition-all duration-1000" id="barPhq" style="width: 0%">PHQ</div>
+                    <div class="bg-red-400 h-full flex items-center justify-center text-[10px] font-bold text-white transition-all duration-1000" id="barComp" style="width: 0%">Top Comp</div>
+                    <div class="bg-slate-300 h-full flex items-center justify-center text-[10px] font-bold text-slate-600 transition-all duration-1000" id="barRest" style="width: 100%">Resto</div>
+                </div>
+                <div class="flex justify-between text-xs text-slate-500 px-1">
+                    <span id="labelPhq">PHQ: 0%</span>
+                    <span id="labelComp">Competencia: 0%</span>
+                    <span id="labelRest">Resto: 0%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white p-4 rounded-xl border border-slate-200 text-center kpi-card">
+                <div class="flex items-center justify-center gap-2 mb-1">
+                    <span class="material-symbols-outlined text-slate-400 text-lg">groups</span>
+                    <p class="text-[10px] text-slate-400 uppercase font-bold">Total Médicos</p>
+                </div>
+                <p class="text-2xl font-black text-slate-800" id="statTotalDocs">0</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-slate-200 text-center kpi-card">
+                <div class="flex items-center justify-center gap-2 mb-1">
+                    <span class="material-symbols-outlined text-slate-400 text-lg">receipt_long</span>
+                    <p class="text-[10px] text-slate-400 uppercase font-bold">Recetas Totales</p>
+                </div>
+                <p class="text-2xl font-black text-slate-800" id="statTotalMkt">0</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-slate-200 text-center kpi-card">
+                <div class="flex items-center justify-center gap-2 mb-1">
+                    <span class="material-symbols-outlined text-blue-400 text-lg">pill</span>
+                    <p class="text-[10px] text-blue-500 uppercase font-bold">Recetas Lab</p>
+                </div>
+                <p class="text-2xl font-black text-blue-600" id="statMyRx">0</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-slate-200 text-center kpi-card">
+                <div class="flex items-center justify-center gap-2 mb-1">
+                    <span class="material-symbols-outlined text-green-500 text-lg">pie_chart</span>
+                    <p class="text-[10px] text-green-600 uppercase font-bold">Share Total</p>
+                </div>
+                <p class="text-2xl font-black text-green-700" id="statShare">0%</p>
+            </div>
+        </div>
+
+        <!-- 9-Box Matrix -->
+        <div class="mb-10 overflow-x-auto pb-4">
+            <div class="flex justify-between items-center mb-6 min-w-[700px]">
+                <h3 class="font-bold text-slate-800 flex items-center gap-2 text-lg">
+                    <span class="material-symbols-outlined text-blue-600">grid_view</span>
+                    Matriz Estratégica
+                    <span class="text-xs font-normal text-slate-500 bg-slate-100 px-3 py-1 rounded-full ml-2">Clic para filtrar</span>
+                </h3>
+                <div class="flex gap-2">
+                    <button onclick="toggleSummaryCells()" class="text-xs font-bold bg-slate-200 hover:bg-slate-300 text-slate-600 px-3 py-1.5 rounded-lg transition flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">functions</span>
+                        <span id="btnSummaryText">Ver Resúmenes</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 min-w-[850px]" id="matrixCaptureTarget">
+                <div class="matrix-grid" id="matrixGridElement">
+                    <!-- Headers -->
+                    <div></div>
+                    <div class="matrix-header-col"><div class="text-red-500 mb-1"><span class="material-symbols-outlined">remove</span></div>Baja Adopción (-)<br><span class="text-[10px] font-normal text-slate-400" id="header_label_C">≤ 33%</span></div>
+                    <div class="matrix-header-col"><div class="text-yellow-500 mb-1"><span class="material-symbols-outlined">drag_handle</span></div>Media Adopción<br><span class="text-[10px] font-normal text-slate-400" id="header_label_B">33% - 65%</span></div>
+                    <div class="matrix-header-col"><div class="text-green-500 mb-1"><span class="material-symbols-outlined">add</span></div>Alta Adopción (+)<br><span class="text-[10px] font-normal text-slate-400" id="header_label_A">≥ 65%</span></div>
+                    
+                    <!-- Summary Column Header -->
+                    <div class="summary-element flex-col justify-end pb-2 items-center">
+                        <span class="summary-header-title">Resumen Potencialidad</span>
+                    </div>
+
+                    <!-- Row A -->
+                    <div class="matrix-header-row border-r pr-2 border-slate-100">
+                        <span class="text-purple-700 text-center">Alto Potencial (A)</span>
+                        <span class="text-[9px] font-normal text-slate-400 mt-1" id="row_label_A">Top 33%</span>
+                    </div>
+
+                    <!-- JS Injected Cells -->
+                    <div id="matrixContainer" style="display:contents"></div>
+                    
+                </div>
+            </div>
+        </div>
+
+        <!-- Detail Table -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <div>
+                    <h3 class="font-bold text-slate-800" id="tableTitle">Listado de Médicos</h3>
+                    <p class="text-xs text-slate-500" id="tableSubtitle">Todos los registros</p>
+                </div>
+                <button class="hidden text-xs bg-slate-200 hover:bg-slate-300 px-3 py-1 rounded text-slate-700 font-semibold transition" id="clearFilterBtn" onclick="clearMatrixFilter()">
+                    Limpiar Filtro Matriz
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse" id="mainTable">
+                    <thead class="bg-slate-100 text-xs font-semibold text-slate-500 uppercase">
+                        <tr>
+                            <th class="p-4">Clasificación final</th>
+                            <th class="p-4">Médico</th>
+                            <th class="p-4">Esp.</th>
+                            <th class="p-4 text-right">Recetas Totales</th>
+                            <th class="p-4 text-right text-blue-700">Recetas Lab</th>
+                            <th class="p-4 text-center">Share %</th>
+                            <th class="p-4 text-center">Oportunidad (Gap)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm divide-y divide-slate-100" id="dataTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Info Modals -->
+<div class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" id="infoModal">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[80vh]">
+        <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+            <h3 class="text-lg font-bold text-slate-800" id="infoModalTitle">Info</h3>
+            <button class="text-slate-400 hover:text-slate-700" onclick="document.getElementById('infoModal').classList.add('hidden')"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div class="p-6 overflow-y-auto" id="infoModalContent"></div>
+    </div>
+</div>
+
+<div class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4" id="codeModal">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col max-h-[90vh]">
+        <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-2xl">
+            <div>
+                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-blue-600">code</span> Código Fuente Completo
+                </h3>
+            </div>
+            <button class="text-slate-400 hover:text-slate-700" onclick="document.getElementById('codeModal').classList.add('hidden')"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div class="p-0 overflow-hidden flex-1 relative group">
+            <textarea class="w-full h-full bg-slate-900 text-green-400 font-mono text-xs p-4 focus:outline-none resize-none" id="sourceCodeText" readonly=""></textarea>
+            <button class="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white px-3 py-1 rounded text-xs backdrop-blur-sm transition border border-white/20" onclick="copySourceCode()">
+                Copiar Todo
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" id="uploadModal">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+        <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+            <h3 class="text-lg font-bold text-slate-800">Cargar Datos</h3>
+            <button class="text-slate-400 hover:text-red-500" onclick="document.getElementById('uploadModal').classList.add('hidden')"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div class="p-6 overflow-y-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <h4 class="font-bold text-blue-800 mb-2 flex items-center gap-2">
+                        <span class="bg-blue-100 p-1 rounded text-blue-600 material-symbols-outlined text-sm">table_chart</span>
+                        1. Datos de Auditoría
+                    </h4>
+                    <p class="text-xs text-slate-500 mb-3 leading-relaxed">
+                        Archivo CSV o Excel con el siguiente orden de columnas:<br>
+                        <span class="font-mono bg-slate-100 p-0.5 rounded">Medico, Matricula, Mercado, Producto, Px_Product, Medico Unico, Domicilio, Cod.Postal, Localidad, Region, Especialidad, Molecula, Clase Terapeutica, Generico, Laboratorio</span>
+                    </p>
+                    <div class="file-drop-area mb-4">
+                        <span class="fake-btn">Elegir archivo</span>
+                        <span class="file-msg" id="auditFileMsg">O arrastra el archivo aquí</span>
+                        <input class="file-input" type="file" id="auditFileInput" accept=".csv, .xlsx, .xls" onchange="updateFileLabel('auditFileInput', 'auditFileMsg')">
+                    </div>
+                    <div class="relative">
+                        <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-200"></div></div>
+                        <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-2 text-slate-400">O pegar texto</span></div>
+                    </div>
+                    <textarea class="w-full h-32 border border-slate-300 rounded-lg p-3 font-mono text-xs focus:ring-2 focus:ring-blue-500 outline-none resize-none mt-2" id="csvInput" placeholder="Pegar datos (Excel/CSV) aquí..."></textarea>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <h4 class="font-bold text-slate-700 mb-2 flex items-center gap-2">
+                        <span class="bg-purple-100 p-1 rounded text-purple-600 material-symbols-outlined text-sm">folder_shared</span>
+                        2. Fichero Médico (Opcional)
+                    </h4>
+                    <p class="text-xs text-slate-500 mb-3">Sube un archivo CSV/Excel para cruzar datos adicionales.</p>
+                    <div class="file-drop-area bg-white">
+                        <span class="fake-btn">Elegir Fichero</span>
+                        <span class="file-msg" id="ficheroFileMsg">O arrastra el archivo aquí</span>
+                        <input class="file-input" type="file" id="ficheroFileInput" accept=".csv, .xlsx, .xls" onchange="updateFileLabel('ficheroFileInput', 'ficheroFileMsg')">
+                    </div>
+                </div>
+            </div>
+            <p class="text-red-500 text-xs font-bold mt-2 hidden" id="errorMsg"></p>
+        </div>
+        <div class="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 rounded-b-2xl">
+            <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold shadow transition flex items-center gap-2" onclick="processData()">
+                <span class="material-symbols-outlined text-sm">rocket_launch</span> Procesar Datos
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" id="configModal">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+        <div class="p-6 border-b border-slate-100">
+            <h3 class="text-lg font-bold text-slate-800">Productos PHQ</h3>
+            <p class="text-xs text-slate-500">Define tus productos clave.</p>
+        </div>
+        <div class="p-6">
+            <textarea class="w-full h-40 border border-slate-300 rounded-lg p-3 text-xs focus:ring-2 focus:ring-blue-500 outline-none resize-none" id="phqConfigInput">LEPRIT, ESOZ, FLUDIL, TIOCOLFEN, SULAMP, BUMETIN, TIOCOL, MONUKAST, GLUSTAR, CANDETIQUE, OLMETIQUE, XAROX</textarea>
+            <div class="mt-4 flex justify-between items-center">
+                <button onclick="clearSessionData()" class="text-red-500 text-xs font-bold hover:text-red-700 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">delete_forever</span> Borrar Memoria Local
+                </button>
+            </div>
+        </div>
+        <div class="p-4 bg-slate-50 border-t border-slate-100 text-right rounded-b-2xl">
+            <button class="bg-slate-800 text-white px-4 py-2 rounded text-sm font-medium" onclick="saveConfig()">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<div class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" id="doctorDetailModal">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[85vh] flex flex-col">
+        <div class="p-6 border-b border-slate-100 bg-slate-50 flex justify-between items-start rounded-t-2xl">
+            <div>
+                <div class="flex items-center gap-2 mb-2" id="modalBadges"></div>
+                <h3 class="text-xl font-bold text-slate-800" id="modalDocName">Nombre</h3>
+                <div class="flex gap-2 text-xs text-slate-500 mt-1">
+                    <span class="bg-white px-2 py-1 rounded border" id="modalDocSpec">Esp</span>
+                    <span class="bg-white px-2 py-1 rounded border" id="modalDocLic">Lic</span>
+                    <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-200 font-bold" id="modalDocShare">Share: 0%</span>
+                </div>
+            </div>
+            <button class="text-slate-400 hover:text-slate-700" onclick="document.getElementById('doctorDetailModal').classList.add('hidden')"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <!-- AGREGADO: ID para controlar el scroll -->
+        <div class="p-6 overflow-y-auto flex-1 bg-white" id="doctorModalBody">
+            <div class="hidden" id="modalGapContainer"></div>
+            <div id="modalFicheroData" class="hidden mb-6">
+                <details class="group border border-purple-200 rounded-lg bg-purple-50 overflow-hidden">
+                    <summary class="flex items-center justify-between p-3 cursor-pointer select-none hover:bg-purple-100 transition text-purple-800 font-bold text-sm" id="ficheroSummaryHeader">
+                        <!-- El contenido se genera dinámicamente -->
+                    </summary>
+                    <div class="p-4 border-t border-purple-100 bg-white" id="modalFicheroContainer">
+                        <!-- Dynamic Content Here -->
+                    </div>
+                </details>
+            </div>
+            <div id="modalContent"></div>
+        </div>
+        <div class="p-4 border-t border-slate-100 bg-slate-50 text-right rounded-b-2xl">
+            <button class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium" onclick="document.getElementById('doctorDetailModal').classList.add('hidden')">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- SECURITY LAYER (Modo Protegido) ---
+    (function() {
+        // Deshabilitar clic derecho
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        
+        // Deshabilitar atajos de teclado comunes para inspección
+        document.onkeydown = function(e) {
+            // F12
+            if (e.keyCode == 123) return false; 
+            // Ctrl+Shift+I (Inspector)
+            if (e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
+            // Ctrl+Shift+J (Consola)
+            if (e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
+            // Ctrl+U (Ver fuente)
+            if (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+        };
+        
+        console.log("%c SYSTEM SECURE ", "color: #fff; background: #2563eb; padding: 5px; border-radius: 4px; font-weight: bold;");
+    })();
+
+    function safeSetText(id, value) { const el = document.getElementById(id); if (el) el.innerText = value; }
+    
+    // --- STATE VARIABLES ---
+    let RAW_DATA = [];
+    let PHQ_PRODUCTS = [];
+    let PROCESSED_DATA = [];
+    let MATRIX_FILTER = null;
+    let MARKET_LIST = []; 
+    let SELECTED_MARKETS = [];
+    let CURRENT_COMP_BREAKDOWN = [];
+    let FICHERO_MAP = new Map();
+    let SHOW_SUMMARIES = false;
+
+    // --- GITHUB DATA SOURCES ---
+const GITHUB_DATA = {
+    audit: 'https://raw.githubusercontent.com/hjsanoja/AppSegmentacion/main/data/datacloseup.csv',
+    fichero: 'https://raw.githubusercontent.com/hjsanoja/AppSegmentacion/main/data/fichero_medico.csv'
+};
+
+    
+    // Config States - Adoption (Share)
+    let TH_LOY_LOW = 33;
+    let TH_LOY_HIGH = 65;
+    
+    // Config States - Potency (Volume Percentile)
+    let TH_POT_LOW = 33;
+    let TH_POT_HIGH = 66;
+
+    // --- Persistence Logic (LocalForage) ---
+    async function initStorage() {
+        if(!window.localforage) return;
+        localforage.config({ name: 'PHQ_Matrix_DB', storeName: 'session_data' });
+        
+        // Try to restore session on load
+        try {
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('restoringSession').classList.remove('hidden');
+
+            const savedAudit = await localforage.getItem('RAW_DATA');
+            const savedFichero = await localforage.getItem('FICHERO_DATA'); // Stored as Array of entries
+            const savedConfig = await localforage.getItem('PHQ_PRODUCTS');
+
+            if (savedAudit && savedAudit.length > 0) {
+                console.log("Restoring session from IndexedDB...");
+                RAW_DATA = savedAudit;
+                
+                if (savedFichero) {
+                    FICHERO_MAP = new Map(savedFichero);
+                }
+                
+                if (savedConfig) {
+                    PHQ_PRODUCTS = savedConfig;
+                    document.getElementById('phqConfigInput').value = PHQ_PRODUCTS.join(', ');
+                } else {
+                    loadConfig(); // Load default from HTML
+                }
+
+                // Process without re-reading files
+                await processData(true);
+                showToast("Sesión restaurada correctamente");
+            } else {
+                // No session found, show empty state
+                document.getElementById('restoringSession').classList.add('hidden');
+                document.getElementById('emptyState').classList.remove('hidden');
+                loadConfig();
+            }
+        } catch (err) {
+            console.error("Storage Error:", err);
+            document.getElementById('restoringSession').classList.add('hidden');
+            document.getElementById('emptyState').classList.remove('hidden');
+            loadConfig();
+        }
+    }
+
+    async function saveSession() {
+        if(!window.localforage) return;
+        try {
+            await localforage.setItem('RAW_DATA', RAW_DATA);
+            // Convert Map to Array for storage
+            await localforage.setItem('FICHERO_DATA', Array.from(FICHERO_MAP.entries())); 
+            await localforage.setItem('PHQ_PRODUCTS', PHQ_PRODUCTS);
+            console.log("Session saved to IndexedDB");
+        } catch (e) {
+            console.error("Save Error:", e);
+            showToast("Error al guardar en memoria local");
+        }
+    }
+
+    async function clearSessionData() {
+        if(confirm("¿Estás seguro? Esto borrará los datos actuales de la memoria y tendrás que cargar el archivo nuevamente.")) {
+            if(window.localforage) {
+                await localforage.clear();
+            }
+            window.location.reload();
+        }
+    }
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.innerText = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // --- Generate Matrix Cells Structure ---
+    function generateMatrixGridHTML() {
+        const container = document.getElementById('matrixContainer');
+        if(!container) return;
+        
+        const cellIds = [
+            {id: 'cell_A_C', label: 'A-', title: 'Conquista', color: 'red', delay: 0.1},
+            {id: 'cell_A_B', label: 'A', title: 'Desarrollo', color: 'yellow', delay: 0.2},
+            {id: 'cell_A_A', label: 'A+', title: 'Defensa', color: 'green', delay: 0.3},
+            
+            {id: 'cell_B_C', label: 'B-', title: 'Bajo', color: 'red', delay: 0.15},
+            {id: 'cell_B_B', label: 'B', title: 'Medio', color: 'yellow', delay: 0.25},
+            {id: 'cell_B_A', label: 'B+', title: 'Alto', color: 'green', delay: 0.35},
+            
+            {id: 'cell_C_C', label: 'C-', title: 'Bajo', color: 'slate', delay: 0.2},
+            {id: 'cell_C_B', label: 'C', title: 'Medio', color: 'slate', delay: 0.3},
+            {id: 'cell_C_A', label: 'C+', title: 'Alto', color: 'blue', delay: 0.4}
+        ];
+
+        let html = '';
+        
+        // --- Row A ---
+        cellIds.slice(0,3).forEach(c => html += generateSingleCellHTML(c));
+        html += generateSummaryCellHTML('row_A', 'Total Potencial A');
+        
+        // --- Row B ---
+        html += `<div class="matrix-header-row border-r pr-2 border-slate-100"><span class="text-blue-600 text-center">Medio Potencial (B)</span><span class="text-[9px] font-normal text-slate-400 mt-1" id="row_label_B">33% - 66%</span></div>`;
+        cellIds.slice(3,6).forEach(c => html += generateSingleCellHTML(c));
+        html += generateSummaryCellHTML('row_B', 'Total Potencial B');
+        
+        // --- Row C ---
+        html += `<div class="matrix-header-row border-r pr-2 border-slate-100"><span class="text-slate-400 text-center">Bajo Potencial (C)</span><span class="text-[9px] font-normal text-slate-300 mt-1" id="row_label_C">> 66%</span></div>`;
+        cellIds.slice(6,9).forEach(c => html += generateSingleCellHTML(c));
+        html += generateSummaryCellHTML('row_C', 'Total Potencial C');
+
+        // --- Bottom Summary Row (Adoption) ---
+        html += `<div class="summary-element flex items-center justify-end font-bold text-xs text-slate-500 uppercase tracking-wide pr-2">Resumen Adopción</div>`;
+        html += generateSummaryCellHTML('col_C', 'Total Baja Adopción');
+        html += generateSummaryCellHTML('col_B', 'Total Media Adopción');
+        html += generateSummaryCellHTML('col_A', 'Total Alta Adopción');
+        html += `<div class="summary-element bg-slate-100 rounded-xl items-center justify-center text-xs text-slate-400 font-bold uppercase tracking-widest border border-slate-200">Total Universo</div>`;
+
+        container.innerHTML = html;
+    }
+
+    function generateSingleCellHTML(c) {
+        const key = c.id.replace('cell_', ''); 
+        let hoverClass = "";
+        let pulseClass = "";
+        
+        if(c.color === 'green') hoverClass = "group-hover:text-green-600";
+        if(c.color === 'red') hoverClass = "group-hover:text-red-500";
+        if(c.color === 'yellow') hoverClass = "group-hover:text-yellow-500";
+        
+        if(key === 'A_A' || key === 'A_C') pulseClass = "pulse-active";
+
+        return `
+        <div class="matrix-cell group theme-${c.color} ${pulseClass}" id="${c.id}" onclick="filterByMatrix('${key.split('_')[0]}', '${key.split('_')[1]}')" style="animation-delay: ${c.delay}s">
+            <div class="cell-tooltip" id="tooltip_${key}">Top: Cargando...</div>
+            <div class="flex justify-between items-start mb-2 pointer-events-none">
+                <span class="font-bold text-xs uppercase tracking-widest text-slate-500">${c.title}</span>
+                <button onclick="toggleStats(event, '${key}')" class="pointer-events-auto text-slate-300 hover:text-blue-500 transition" title="Ver Promedios">
+                    <span class="material-symbols-outlined text-[16px]">visibility</span>
+                </button>
+            </div>
+            <div class="grid grid-cols-2 gap-y-1 gap-x-2 text-[10px] text-slate-600 mb-2 pointer-events-none">
+                <div title="Rx Total"><span class="material-symbols-outlined icon-inline text-slate-400">receipt_long</span> Rx Total: <span class="font-bold" id="rx_${key}">0</span></div>
+                <div title="Rx PHQ" class="text-right"><span class="material-symbols-outlined icon-inline text-slate-400">pill</span> PHQ: <span class="font-bold text-blue-600" id="phq_${key}">0</span></div>
+                <div title="Market Share" class="col-span-2 text-center border-t border-slate-50 pt-1 mt-1">
+                    <span class="material-symbols-outlined icon-inline text-slate-400">pie_chart</span> MS%: <span class="font-bold text-slate-800" id="ms_${key}">0%</span>
+                </div>
+            </div>
+            <div class="stats-drawer text-[9px] text-slate-500 flex justify-between px-2 bg-slate-50 rounded pointer-events-auto" id="drawer_${key}">
+                <div class="flex flex-col items-center py-1"><span>Media Tot</span><span class="font-bold text-slate-700 text-xs" id="avg_tot_${key}">0</span></div>
+                <div class="flex flex-col items-center py-1"><span>Media PHQ</span><span class="font-bold text-blue-600 text-xs" id="avg_phq_${key}">0</span></div>
+            </div>
+            <div class="flex-1 flex flex-col items-center justify-center my-2 pointer-events-none">
+                <div class="text-5xl font-black tracking-tighter text-slate-800 letter-display ${hoverClass} transition-colors duration-300" style="font-family: 'Inter', sans-serif;">${c.label}</div>
+            </div>
+            <div class="flex items-center justify-center gap-1 text-xl font-bold text-slate-800 leading-none mb-1 mt-auto border-t border-slate-100 pt-2 pointer-events-none">
+                <span class="material-symbols-outlined text-slate-400 text-lg mr-1" style="vertical-align: -2px;">groups</span>
+                <span id="count_${key}">0</span>
+            </div>
+            <div class="text-center pointer-events-none">
+                <div class="text-[10px] text-slate-400 font-medium"><span id="pct_drs_${key}">0%</span></div>
+            </div>
+        </div>`;
+    }
+
+    function generateSummaryCellHTML(id, title) {
+        return `
+        <div class="matrix-cell-summary summary-element" id="sum_${id}">
+             <div class="text-center mb-3">
+                <span class="font-bold text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-200 pb-1 block">${title}</span>
+            </div>
+             <div class="space-y-2 text-xs">
+                <div class="flex justify-between items-center"><span class="text-slate-400">Rx Total</span> <span class="font-bold text-slate-600 font-mono" id="${id}_rx">0</span></div>
+                <div class="flex justify-between items-center"><span class="text-blue-400">Rx PHQ</span> <span class="font-bold text-blue-600 font-mono" id="${id}_phq">0</span></div>
+                <div class="flex justify-between items-center"><span class="text-green-500">Share Avg</span> <span class="font-bold text-green-700" id="${id}_share">0%</span></div>
+                <div class="w-full h-px bg-slate-200 my-2"></div>
+                <div class="flex justify-between items-center"><span class="font-bold text-slate-700">Drs</span> <span class="font-black text-lg text-slate-800" id="${id}_count">0</span></div>
+             </div>
+        </div>`;
+    }
+
+    function toggleSummaryCells() {
+        SHOW_SUMMARIES = !SHOW_SUMMARIES;
+        const elements = document.querySelectorAll('.summary-element');
+        const btnText = document.getElementById('btnSummaryText');
+        const grid = document.getElementById('matrixGridElement');
+        if (SHOW_SUMMARIES) { grid.classList.add('expanded'); } else { grid.classList.remove('expanded'); }
+        elements.forEach(el => { if(SHOW_SUMMARIES) el.classList.add('show'); else el.classList.remove('show'); });
+        btnText.innerText = SHOW_SUMMARIES ? "Ocultar Resúmenes" : "Ver Resúmenes";
+    }
+
+    function toggleStats(e, key) {
+        e.stopPropagation(); 
+        const clickedDrawer = document.getElementById(`drawer_${key}`);
+        const shouldOpen = !clickedDrawer.classList.contains('open');
+        document.querySelectorAll('.stats-drawer').forEach(drawer => {
+            if (shouldOpen) drawer.classList.add('open');
+            else drawer.classList.remove('open');
+        });
+    }
+
+    function normalizeKey(key) { if(!key) return ""; let s = String(key).trim(); return s.replace(/^0+/, ''); }
+
+    // --- LOAD CSV FROM GITHUB ---
+async function loadCSVFromGitHub(url) {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Error cargando " + url);
+    const text = await response.text();
+    return XLSX.read(text, { type: "string" });
+}
+
+
+    // --- INITIALIZATION ---
+    window.addEventListener('DOMContentLoaded', async () => {
+    generateMatrixGridHTML();
+    await initStorage();
+
+    if (!RAW_DATA || RAW_DATA.length === 0) {
+        loadDataFromGitHub();
+    }
+});
+
+
+// --- AUTO LOAD DATA FROM GITHUB ---
+async function loadDataFromGitHub() {
+    try {
+        showToast("Cargando datos desde GitHub...");
+
+        // CloseUp / Auditoría
+        const auditWB = await loadCSVFromGitHub(GITHUB_DATA.audit);
+        const auditSheet = auditWB.Sheets[auditWB.SheetNames[0]];
+        RAW_DATA = XLSX.utils.sheet_to_json(auditSheet, { defval: "" });
+
+        // Fichero Médico
+        const ficheroWB = await loadCSVFromGitHub(GITHUB_DATA.fichero);
+        const ficheroSheet = ficheroWB.Sheets[ficheroWB.SheetNames[0]];
+        const ficheroRows = XLSX.utils.sheet_to_json(ficheroSheet, { defval: "" });
+
+        FICHERO_MAP.clear();
+        ficheroRows.forEach(row => {
+            if (row.Matricula) {
+                FICHERO_MAP.set(String(row.Matricula).trim(), row);
+            }
+        });
+
+        await processData(true);
+        await saveSession();
+
+        showToast("Datos cargados correctamente");
+    } catch (err) {
+        console.error(err);
+        showToast("Error cargando datos desde GitHub");
+    }
+}
+
+
+    function loadConfig() { const input = document.getElementById('phqConfigInput').value; PHQ_PRODUCTS = input.split(/[\n,]+/).map(s => s.trim().toUpperCase()).filter(s => s); }
+    function saveConfig() { loadConfig(); document.getElementById('configModal').classList.add('hidden'); saveSession(); if(RAW_DATA.length > 0) processData(true); }
+    function isPhq(prodName) { if(!prodName) return false; const upper = prodName.toUpperCase(); return PHQ_PRODUCTS.some(p => upper.includes(p)); }
+
+    function showSourceCode() { document.getElementById('sourceCodeText').value = "<!DOCTYPE html>\n" + document.documentElement.outerHTML; document.getElementById('codeModal').classList.remove('hidden'); }
+    function copySourceCode() { const text = document.getElementById('sourceCodeText'); text.select(); navigator.clipboard.writeText(text.value); alert("Código copiado."); }
+
+    // --- Dynamic Threshold Logic ---
+    function updateThresholds() {
+        const low = parseInt(document.getElementById('sliderLow').value);
+        const high = parseInt(document.getElementById('sliderHigh').value);
+        const potLow = parseInt(document.getElementById('sliderPotLow').value);
+        const potHigh = parseInt(document.getElementById('sliderPotHigh').value);
+        
+        // Validation: Prevent Crossing
+        if (low >= high) return; 
+        if (potLow >= potHigh) return;
+
+        TH_LOY_LOW = low;
+        TH_LOY_HIGH = high;
+        TH_POT_LOW = potLow;
+        TH_POT_HIGH = potHigh;
+        
+        safeSetText('lblThLow', low + '%');
+        safeSetText('lblThHigh', high + '%');
+        safeSetText('lblPotLow', potLow + '%');
+        safeSetText('lblPotHigh', potHigh + '%');
+        
+        // Update header labels
+        safeSetText('header_label_C', `≤ ${low}%`);
+        safeSetText('header_label_B', `${low}% - ${high}%`);
+        safeSetText('header_label_A', `≥ ${high}%`);
+        
+        safeSetText('row_label_A', `Top ${potLow}%`);
+        safeSetText('row_label_B', `${potLow}% - ${potHigh}%`);
+        safeSetText('row_label_C', `> ${potHigh}%`);
+
+        if(PROCESSED_DATA.length > 0) applyFilters();
+    }
+
+    // --- Export Logic ---
+
+    function exportPDF() {
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Title and Metadata
+            doc.setFontSize(16);
+            doc.text("Reporte de Matriz PHQ", 14, 20);
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 14, 28);
+
+            let data = PROCESSED_DATA;
+            if(MATRIX_FILTER) {
+                 const sign = MATRIX_FILTER.loy==='C'?'-':(MATRIX_FILTER.loy==='A'?'+':'');
+                 data = data.filter(d => d.catPotency === MATRIX_FILTER.pot && d.catLoyalty === MATRIX_FILTER.loy);
+                 doc.text(`Filtro: Cuadrante ${MATRIX_FILTER.pot}${sign}`, 14, 34);
+            } else {
+                 doc.text("Filtro: Todos los registros", 14, 34);
+            }
+
+            const tableBody = data.map(d => [
+                d.matrixLabel, 
+                d.name, 
+                d.gap > 0 ? `+${d.gap}` : '-', 
+                d.totalRx.toLocaleString(), 
+                d.rxPhq.toLocaleString(), 
+                d.share.toFixed(1)+'%'
+            ]);
+
+            doc.autoTable({ 
+                startY: 40,
+                head: [['Target', 'Médico', 'Gap', 'Rx Total', 'Rx Lab', 'MS %']], 
+                body: tableBody,
+                theme: 'grid',
+                headStyles: { fillColor: [59, 130, 246] }, // Blue header
+                styles: { fontSize: 8 },
+                columnStyles: {
+                    3: { halign: 'right' },
+                    4: { halign: 'right' },
+                    5: { halign: 'center' }
+                }
+            });
+
+            doc.save("Reporte_PHQ.pdf");
+        } catch (error) {
+            console.error("PDF Export Error:", error);
+            alert("Error al generar PDF. Asegúrate de que los datos estén cargados.");
+        }
+    }
+
+    function exportExcel() {
+        let data = PROCESSED_DATA;
+        if(MATRIX_FILTER) data = data.filter(d => d.catPotency === MATRIX_FILTER.pot && d.catLoyalty === MATRIX_FILTER.loy);
+        const exportData = data.map(d => ({ "Clasificación final": d.matrixLabel, "Médico": d.name, "Rx Faltantes": d.gap, "Recetas Totales": d.totalRx, "Recetas Lab": d.rxPhq, "Share %": (d.share/100).toFixed(3) }));
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Matriz PHQ");
+        XLSX.writeFile(wb, "Analisis_PHQ_Matrix.xlsx");
+    }
+
+    function updateFileLabel(inputId, msgId) {
+        const input = document.getElementById(inputId);
+        const msg = document.getElementById(msgId);
+        if (input.files && input.files.length > 0) { msg.innerText = input.files[0].name; msg.style.color = "#3b82f6"; msg.style.fontWeight = "bold"; } 
+        else { msg.innerText = "O arrastra el archivo aquí"; msg.style.color = "#94a3b8"; }
+    }
+
+    function updateMarketCheckboxes(checked) {
+        document.querySelectorAll('#marketListContainer input[type="checkbox"]').forEach(cb => cb.checked = checked);
+        const selectAllCb = document.getElementById('selectAllMarkets');
+        if(selectAllCb) selectAllCb.checked = checked;
+        const btnText = document.getElementById('marketBtnText');
+        if(btnText) btnText.innerText = checked ? "Todos seleccionados" : "Ninguno seleccionado";
+    }
+
+    function showInfoModal(title, content) { document.getElementById('infoModalTitle').innerText = title; document.getElementById('infoModalContent').innerHTML = content; document.getElementById('infoModal').classList.remove('hidden'); }
+
+    function showMarketDetails() {
+        let html = `<div class="mb-4 text-sm text-slate-600">Ranking completo de productos (Tu Portafolio vs Competencia) en la selección actual.</div><div class="border rounded-lg overflow-hidden max-h-[60vh] overflow-y-auto"><table class="w-full text-xs text-left"><thead class="bg-slate-50 font-bold text-slate-500 uppercase sticky top-0 shadow-sm"><tr><th class="p-2">Producto</th><th class="p-2 text-right">Rx</th><th class="p-2 text-center">MS %</th></tr></thead><tbody class="divide-y divide-slate-100">`;
+        
+        let totalMkt = CURRENT_COMP_BREAKDOWN.reduce((s,i) => s + i.rx, 0);
+        
+        CURRENT_COMP_BREAKDOWN.forEach((item, idx) => {
+            const share = totalMkt > 0 ? (item.rx / totalMkt) * 100 : 0;
+            let rowStyle = "text-slate-600";
+            let nameStyle = "";
+            let shareStyle = "text-slate-500";
+            
+            if(item.type === 'PHQ') {
+                rowStyle = "bg-blue-50 text-blue-900";
+                nameStyle = "font-bold text-blue-700";
+                shareStyle = "font-bold text-blue-700";
+            } else if (idx === 0) {
+                 rowStyle = "bg-red-50 text-red-900";
+            }
+
+            html += `<tr class="${rowStyle}"><td class="p-2 ${nameStyle}">${item.prod} ${item.type==='PHQ'?'(PHQ)':''}</td><td class="p-2 text-right font-mono">${item.rx.toLocaleString()}</td><td class="p-2 text-center ${shareStyle}">${share.toFixed(1)}%</td></tr>`;
+        });
+        
+        html += `</tbody></table></div>`;
+        showInfoModal("Composición de Mercado (Ranking)", html);
+    }
+
+    function toggleMarketDropdown() { document.getElementById('marketDropdownPanel').classList.toggle('hidden'); }
+    document.addEventListener('click', function(event) {
+        const dropdown = document.getElementById('marketDropdownPanel');
+        const button = document.getElementById('marketDropdownBtn');
+        if (!dropdown.classList.contains('hidden') && !dropdown.contains(event.target) && !button.contains(event.target)) { dropdown.classList.add('hidden'); }
+    });
+    function toggleAllMarkets(checked) { document.querySelectorAll('#marketListContainer input[type="checkbox"]').forEach(cb => cb.checked = checked); updateSelectedMarkets(); }
+    function updateSelectedMarkets() {
+        const checkboxes = document.querySelectorAll('#marketListContainer input[type="checkbox"]');
+        SELECTED_MARKETS = [];
+        checkboxes.forEach(cb => { if(cb.checked) SELECTED_MARKETS.push(cb.value); });
+        const btnText = document.getElementById('marketBtnText');
+        if (SELECTED_MARKETS.length === MARKET_LIST.length) { btnText.innerText = "Todos seleccionados"; document.getElementById('selectAllMarkets').checked = true; }
+        else if (SELECTED_MARKETS.length === 0) { btnText.innerText = "Ninguno seleccionado"; document.getElementById('selectAllMarkets').checked = false; }
+        else { btnText.innerText = `${SELECTED_MARKETS.length} Seleccionados`; document.getElementById('selectAllMarkets').checked = false; }
+        applyFilters();
+    }
+
+    function readFileAsJson(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+                    resolve(json);
+                } catch (err) { reject(err); }
+            };
+            reader.onerror = (err) => reject(err); reader.readAsArrayBuffer(file);
+        });
+    }
+
+    // --- DATA PROCESSING (Modified for Persistence) ---
+    async function processData(isRestoring = false) {
+        const errorEl = document.getElementById('errorMsg');
+        errorEl.classList.add('hidden');
+        
+        // If not restoring from DB, read from inputs
+        if (!isRestoring) {
+            const textInput = document.getElementById('csvInput').value;
+            const auditFileInput = document.getElementById('auditFileInput');
+            const ficheroFileInput = document.getElementById('ficheroFileInput');
+
+            if (!textInput.trim() && (!auditFileInput.files || auditFileInput.files.length === 0)) {
+                errorEl.innerText = "Por favor selecciona un archivo o pega los datos."; errorEl.classList.remove('hidden'); return;
+            }
+
+            try {
+                // Process Fichero
+                if (ficheroFileInput.files && ficheroFileInput.files.length > 0) {
+                    const fichJson = await readFileAsJson(ficheroFileInput.files[0]);
+                    FICHERO_MAP.clear();
+                    fichJson.forEach(row => {
+                        const keys = Object.keys(row);
+                        const keyCol = keys.find(k => k.toLowerCase().includes('matricula') || k.toLowerCase().includes('licencia') || k.toLowerCase().includes('license'));
+                        if(keyCol && row[keyCol]) { 
+                            const normalizedKey = normalizeKey(row[keyCol]);
+                            if(!FICHERO_MAP.has(normalizedKey)) { FICHERO_MAP.set(normalizedKey, []); }
+                            FICHERO_MAP.get(normalizedKey).push(row);
+                        }
+                    });
+                }
+
+                // Process Audit
+                RAW_DATA = [];
+                if (auditFileInput.files && auditFileInput.files.length > 0) {
+                    const json = await readFileAsJson(auditFileInput.files[0]);
+                    if (json.length > 0) {
+                        json.forEach(row => {
+                            const vals = Object.values(row);
+                            if (vals.length >= 15) {
+                                RAW_DATA.push({
+                                    doc: String(vals[0] || "").trim(), license: String(vals[1] || "").trim(), market: String(vals[2] || "").trim(), prod: String(vals[3] || "").trim(), rx: parseInt(vals[4]) || 0,
+                                    address: String(vals[6] || "").trim(), zip: String(vals[7] || "").trim(), city: String(vals[8] || "").trim(), region: String(vals[9] || "").trim(),
+                                    spec: String(vals[10] || "").trim(), molecule: String(vals[11] || "").trim(), class: String(vals[12] || "").trim(), generic: String(vals[13] || "").trim(), lab: String(vals[14] || "").trim(),
+                                });
+                            }
+                        });
+                    }
+                } else {
+                    const lines = textInput.split('\n');
+                    lines.forEach(line => {
+                        const l = line.trim(); if(!l) return; const parts = l.includes('\t') ? l.split('\t') : l.split(',');
+                        if(parts.length >= 5) {
+                             RAW_DATA.push({
+                                doc: parts[0]?.trim() || "", license: parts[1]?.trim() || "", market: parts[2]?.trim() || "General", prod: parts[3]?.trim() || "", rx: parseInt(parts[4]?.trim()) || 0,
+                                address: parts[6]?.trim() || "", zip: parts[7]?.trim() || "", city: parts[8]?.trim() || "", region: parts[9]?.trim() || "",
+                                spec: parts[10]?.trim() || "GEN", molecule: parts[11]?.trim() || "", class: parts[12]?.trim() || "", generic: parts[13]?.trim() || "", lab: parts[14]?.trim() || "",
+                            });
+                        }
+                    });
+                }
+                
+                // SAVE SESSION AUTOMATICALLY AFTER PROCESSING
+                saveSession();
+
+            } catch (e) {
+                errorEl.innerText = "Error: " + e.message; errorEl.classList.remove('hidden'); console.error(e);
+                return;
+            }
+        }
+
+        if(RAW_DATA.length === 0) {
+             if(!isRestoring) { errorEl.innerText = "No se encontraron filas válidas."; errorEl.classList.remove('hidden'); }
+             return;
+        }
+
+        populateFilters(); 
+        
+        // If it's a new load, select all markets. If restoring, we could persist selection but for now reset to all for safety.
+        SELECTED_MARKETS = [...MARKET_LIST]; 
+        updateMarketCheckboxes(true);
+
+        aggregateAndCalculate();
+
+        // UI Updates
+        document.getElementById('restoringSession').classList.add('hidden');
+        document.getElementById('uploadModal').classList.add('hidden');
+        document.getElementById('emptyState').classList.add('hidden');
+        document.getElementById('dashboardContent').classList.remove('hidden');
+        document.getElementById('filterBar').classList.remove('hidden');
+        document.getElementById('filterBar').style.display = 'flex';
+        document.getElementById('analysisTools').classList.remove('hidden');
+        document.getElementById('analysisTools').style.display = 'flex';
+        
+        if(!isRestoring) showToast("Datos procesados y guardados");
+    }
+
+    function populateFilters() {
+        const getUnique = (key) => [...new Set(RAW_DATA.map(d => d[key]).filter(x => x))].sort();
+        MARKET_LIST = getUnique('market');
+        const mktContainer = document.getElementById('marketListContainer'); mktContainer.innerHTML = '';
+        MARKET_LIST.forEach(m => {
+            const cleanName = m.replace(/Mercado/i, '').trim() || m;
+            const div = document.createElement('div'); div.className = 'checkbox-item';
+            div.innerHTML = `<input type="checkbox" value="${m}" onchange="updateSelectedMarkets()"><span class="text-xs text-slate-700">${cleanName}</span>`;
+            mktContainer.appendChild(div);
+        });
+        const products = getUnique('prod').filter(p => isPhq(p));
+        const prodSel = document.getElementById('filterProduct'); prodSel.innerHTML = '<option value="all">Todos mis productos</option>';
+        products.forEach(p => prodSel.innerHTML += `<option value="${p}">${p}</option>`);
+
+        const fillSelect = (id, key, label) => {
+            const list = getUnique(key); const sel = document.getElementById(id);
+            sel.innerHTML = `<option value="all">Todos (${label})</option>`;
+            list.forEach(v => sel.innerHTML += `<option value="${v}">${v}</option>`);
+        };
+        fillSelect('filterRegion', 'region', 'Regiones'); fillSelect('filterSpec', 'spec', 'Especialidades');
+        fillSelect('filterMolecule', 'molecule', 'Moléculas'); fillSelect('filterClass', 'class', 'Clases');
+        fillSelect('filterGeneric', 'generic', 'Genéricos'); fillSelect('filterLab', 'lab', 'Laboratorios');
+    }
+
+    function applyFilters() { aggregateAndCalculate(); }
+
+    function aggregateAndCalculate() {
+        const fProd = document.getElementById('filterProduct').value;
+        const fFichero = document.getElementById('filterFichero').value;
+        const fRegion = document.getElementById('filterRegion').value;
+        const fSpec = document.getElementById('filterSpec').value;
+        const fMolecule = document.getElementById('filterMolecule').value;
+        const fClass = document.getElementById('filterClass').value;
+        const fGeneric = document.getElementById('filterGeneric').value;
+        const fLab = document.getElementById('filterLab').value;
+
+        const universeRows = RAW_DATA.filter(row => {
+            if(!SELECTED_MARKETS.includes(row.market)) return false;
+            if(fRegion !== 'all' && row.region !== fRegion) return false;
+            if(fSpec !== 'all' && row.spec !== fSpec) return false;
+            if(fMolecule !== 'all' && row.molecule !== fMolecule) return false;
+            if(fClass !== 'all' && row.class !== fClass) return false;
+            if(fGeneric !== 'all' && row.generic !== fGeneric) return false;
+            if(fLab !== 'all' && row.lab !== fLab) return false;
+            return true;
+        });
+        
+        const docMap = {};
+        const allProductTotals = {}; 
+
+        universeRows.forEach(row => {
+            const id = row.license;
+            if(!docMap[id]) { docMap[id] = { id: id, name: row.doc, spec: row.spec, rxPhq: 0, rxTotalSum: 0, rows: [] }; }
+            docMap[id].rows.push(row);
+            docMap[id].rxTotalSum += row.rx;
+            
+            allProductTotals[row.prod] = (allProductTotals[row.prod] || 0) + row.rx;
+
+            const isTarget = isPhq(row.prod) && (fProd === 'all' || row.prod === fProd);
+            if(isTarget) docMap[id].rxPhq += row.rx;
+        });
+
+        CURRENT_COMP_BREAKDOWN = Object.entries(allProductTotals).map(([k, v]) => ({
+            prod: k, 
+            rx: v,
+            type: isPhq(k) ? 'PHQ' : 'Comp'
+        })).sort((a,b) => b.rx - a.rx);
+
+        let doctors = Object.values(docMap).map(d => {
+            const denominator = d.rxTotalSum; 
+            const share = denominator > 0 ? (d.rxPhq / denominator) * 100 : 0;
+            
+            let catLoyalty = 'C';
+            if (share >= TH_LOY_HIGH) catLoyalty = 'A';
+            else if (share > TH_LOY_LOW) catLoyalty = 'B';
+
+            let targetLabel = "";
+            let gap = 0;
+            if (share < TH_LOY_LOW) {
+                const neededRx = Math.ceil(denominator * (TH_LOY_LOW/100));
+                gap = neededRx - d.rxPhq;
+                targetLabel = `para ser B (${TH_LOY_LOW}%)`;
+            } else if (share < TH_LOY_HIGH) {
+                const neededRx = Math.ceil(denominator * (TH_LOY_HIGH/100));
+                gap = neededRx - d.rxPhq;
+                targetLabel = `para ser A (${TH_LOY_HIGH}%)`;
+            }
+            if (gap < 0) gap = 0;
+
+            const normalizedId = normalizeKey(d.id);
+            const ficheroData = FICHERO_MAP.get(normalizedId) || [];
+            
+            return { ...d, totalRx: denominator, share, catLoyalty, gap, targetLabel, ficheroData };
+        });
+
+        if (fFichero === 'fichado') { doctors = doctors.filter(d => d.ficheroData.length > 0); } 
+        else if (fFichero === 'nofichado') { doctors = doctors.filter(d => d.ficheroData.length === 0); }
+
+        const grandTotalRx = doctors.reduce((s, d) => s + d.totalRx, 0);
+        doctors.sort((a, b) => b.totalRx - a.totalRx);
+        
+        let runningTotal = 0;
+        doctors = doctors.map(d => {
+            runningTotal += d.totalRx;
+            const cumPct = grandTotalRx > 0 ? (runningTotal / grandTotalRx) : 1;
+            const cumPct100 = cumPct * 100;
+
+            let catPotency = 'C';
+            if (cumPct100 <= TH_POT_LOW) catPotency = 'A';
+            else if (cumPct100 <= TH_POT_HIGH) catPotency = 'B';
+            
+            let sign = '';
+            if(d.catLoyalty === 'C') sign = '-';
+            if(d.catLoyalty === 'A') sign = '+';
+
+            return { ...d, catPotency, matrixLabel: catPotency + sign };
+        });
+
+        PROCESSED_DATA = doctors;
+        
+        let topCompName = "N/A"; let topCompRx = 0;
+        const competitorsOnly = CURRENT_COMP_BREAKDOWN.filter(c => c.type === 'Comp');
+        if (competitorsOnly.length > 0) { topCompName = competitorsOnly[0].prod; topCompRx = competitorsOnly[0].rx; }
+        
+        renderDashboard(grandTotalRx, topCompName, topCompRx);
+    }
+
+    function renderDashboard(grandTotal, topCompName, topCompRx) {
+        safeSetText('statTotalDocs', PROCESSED_DATA.length);
+        safeSetText('statTotalMkt', grandTotal.toLocaleString());
+        const totalMyRx = PROCESSED_DATA.reduce((s, d) => s + d.rxPhq, 0);
+        safeSetText('statMyRx', totalMyRx.toLocaleString());
+        const avgShare = grandTotal > 0 ? (totalMyRx / grandTotal) * 100 : 0;
+        safeSetText('statShare', avgShare.toFixed(1) + "%");
+        safeSetText('topCompName', topCompName); safeSetText('topCompRx', topCompRx.toLocaleString());
+
+        const restRx = grandTotal - totalMyRx - topCompRx;
+        const pctPhq = grandTotal > 0 ? (totalMyRx/grandTotal)*100 : 0;
+        const pctComp = grandTotal > 0 ? (topCompRx/grandTotal)*100 : 0;
+        const pctRest = grandTotal > 0 ? (restRx/grandTotal)*100 : 0;
+
+        const elBarPhq = document.getElementById('barPhq'); if(elBarPhq) elBarPhq.style.width = pctPhq + "%";
+        const elBarComp = document.getElementById('barComp'); if(elBarComp) elBarComp.style.width = pctComp + "%";
+        const elBarRest = document.getElementById('barRest'); if(elBarRest) elBarRest.style.width = pctRest + "%";
+
+        safeSetText('labelPhq', `PHQ: ${pctPhq.toFixed(1)}%`);
+        safeSetText('labelComp', `${topCompName.substring(0,8)}..: ${pctComp.toFixed(1)}%`);
+        safeSetText('labelRest', `Resto: ${pctRest.toFixed(1)}%`);
+
+        const matrixKeys = ['A_C', 'A_B', 'A_A', 'B_C', 'B_B', 'B_A', 'C_C', 'C_B', 'C_A'];
+        const summaries = { row_A: { rx:0, phq:0, count:0 }, row_B: { rx:0, phq:0, count:0 }, row_C: { rx:0, phq:0, count:0 }, col_C: { rx:0, phq:0, count:0 }, col_B: { rx:0, phq:0, count:0 }, col_A: { rx:0, phq:0, count:0 } };
+
+        matrixKeys.forEach(key => {
+            const [pot, loy] = key.split('_');
+            const subset = PROCESSED_DATA.filter(d => d.catPotency === pot && d.catLoyalty === loy);
+            const count = subset.length;
+            const sumRx = subset.reduce((s,d) => s + d.totalRx, 0);
+            const sumPhq = subset.reduce((s,d) => s + d.rxPhq, 0);
+            const avgMS = sumRx > 0 ? (sumPhq / sumRx) * 100 : 0;
+            const avgTotPerDoc = count > 0 ? Math.round(sumRx / count) : 0;
+            const avgPhqPerDoc = count > 0 ? Math.round(sumPhq / count) : 0;
+            const pctOfUniverse = PROCESSED_DATA.length > 0 ? (count / PROCESSED_DATA.length) * 100 : 0;
+
+            safeSetText(`count_${key}`, count);
+            safeSetText(`rx_${key}`, compactNum(sumRx));
+            safeSetText(`phq_${key}`, compactNum(sumPhq));
+            safeSetText(`ms_${key}`, avgMS.toFixed(0) + '%');
+            safeSetText(`avg_tot_${key}`, avgTotPerDoc);
+            safeSetText(`avg_phq_${key}`, avgPhqPerDoc);
+            safeSetText(`pct_drs_${key}`, pctOfUniverse.toFixed(2) + '%');
+
+            const tooltip = document.getElementById(`tooltip_${key}`);
+            if(count > 0) {
+                const topDoc = subset.reduce((prev, current) => (prev.totalRx > current.totalRx) ? prev : current);
+                tooltip.innerHTML = `<strong>Top:</strong> ${topDoc.name.substring(0,12)}<br>Rx: ${topDoc.totalRx}`;
+            } else { tooltip.innerHTML = `Sin datos`; }
+
+            if(summaries[`row_${pot}`]) { summaries[`row_${pot}`].rx += sumRx; summaries[`row_${pot}`].phq += sumPhq; summaries[`row_${pot}`].count += count; }
+            if(summaries[`col_${loy}`]) { summaries[`col_${loy}`].rx += sumRx; summaries[`col_${loy}`].phq += sumPhq; summaries[`col_${loy}`].count += count; }
+        });
+
+        Object.keys(summaries).forEach(k => {
+            const s = summaries[k]; const share = s.rx > 0 ? (s.phq / s.rx)*100 : 0;
+            safeSetText(`${k}_rx`, compactNum(s.rx)); safeSetText(`${k}_phq`, compactNum(s.phq));
+            safeSetText(`${k}_count`, s.count); safeSetText(`${k}_share`, share.toFixed(1)+'%');
+        });
+        renderTable();
+    }
+
+    function compactNum(num) { return Intl.NumberFormat('en-US', { notation: "compact", maximumFractionDigits: 1 }).format(num); }
+
+    function filterByMatrix(pot, loy) {
+        MATRIX_FILTER = { pot, loy };
+        document.querySelectorAll('.matrix-cell').forEach(c => c.classList.remove('selected'));
+        const cell = document.getElementById(`cell_${pot}_${loy}`); if(cell) cell.classList.add('selected');
+        document.getElementById('clearFilterBtn').classList.remove('hidden');
+        let sign = (loy === 'C' ? '-' : (loy === 'A' ? '+' : ''));
+        safeSetText('tableSubtitle', `Filtrado: Cuadrante ${pot}${sign}`);
+        renderTable();
+    }
+
+    function clearMatrixFilter() {
+        MATRIX_FILTER = null;
+        document.querySelectorAll('.matrix-cell').forEach(c => c.classList.remove('selected'));
+        document.getElementById('clearFilterBtn').classList.add('hidden');
+        safeSetText('tableSubtitle', "Todos los registros");
+        renderTable();
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('dataTable'); if(!tbody) return; tbody.innerHTML = '';
+        const searchText = document.getElementById('globalSearch').value.toLowerCase();
+        let data = PROCESSED_DATA;
+        if(MATRIX_FILTER) { data = data.filter(d => d.catPotency === MATRIX_FILTER.pot && d.catLoyalty === MATRIX_FILTER.loy); }
+        if(searchText) { 
+            data = data.filter(d => d.name.toLowerCase().includes(searchText) || String(d.id).toLowerCase().includes(searchText)); 
+        }
+
+        data.slice(0, 300).forEach(d => {
+            const tr = document.createElement('tr');
+            tr.className = `hover:bg-slate-50 transition border-b border-slate-100 cursor-pointer`;
+            tr.onclick = () => openDoctorModal(d.id); 
+            
+            let colorClass = "bg-slate-100 text-slate-600";
+            if(d.catPotency === 'A') colorClass = "bg-purple-100 text-purple-700 border border-purple-200";
+
+            let gapHtml = `<span class="text-xs text-green-600 font-bold">Objetivo</span>`;
+            if (d.gap > 0) { gapHtml = `<span class="badge-gap">+${d.gap} Rx</span>`; }
+
+            let fichIcon = ""; let fichClass = "";
+            if(d.ficheroData && d.ficheroData.length > 0) { fichIcon = `<span class="material-symbols-outlined text-purple-600 text-sm ml-1" title="Fichado: ${d.ficheroData.length} representante(s)">check_circle</span>`; } 
+            else { fichIcon = `<span class="material-symbols-outlined text-slate-300 text-sm ml-1" title="No Fichado">cancel</span>`; fichClass = "opacity-80"; }
+            
+            tr.innerHTML = `
+                <td class="p-4 ${fichClass}"><span class="font-bold text-xs px-2 py-1 rounded ${colorClass}">${d.matrixLabel}</span></td>
+                <td class="p-4 ${fichClass}"><div class="font-bold text-sm text-slate-700 hover:text-blue-600 flex items-center gap-1">${d.name} ${fichIcon}</div></td>
+                <td class="p-4 text-xs text-slate-500 ${fichClass}">${d.spec}</td>
+                <td class="p-4 text-right font-mono text-xs text-slate-600 ${fichClass}">${d.totalRx.toLocaleString()}</td>
+                <td class="p-4 text-right font-mono text-xs font-bold text-blue-600 ${fichClass}">${d.rxPhq.toLocaleString()}</td>
+                <td class="p-4 text-center text-xs font-bold text-slate-700 ${fichClass}">${d.share.toFixed(1)}%</td>
+                <td class="p-4 text-center ${fichClass}">${gapHtml}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function getValueCaseInsensitive(obj, keyPart) {
+        if(!obj) return null;
+        const foundKey = Object.keys(obj).find(k => k.toUpperCase().includes(keyPart.toUpperCase()));
+        return foundKey ? obj[foundKey] : null;
+    }
+
+    function openDoctorModal(docId) {
+        const doc = PROCESSED_DATA.find(d => d.id === docId); if(!doc) return;
+        
+        safeSetText('modalDocName', doc.name); safeSetText('modalDocSpec', doc.spec);
+        safeSetText('modalDocLic', doc.id); safeSetText('modalDocShare', `Share Total: ${doc.share.toFixed(1)}%`);
+
+        const badgesContainer = document.getElementById('modalBadges');
+        let potLabel = `Potencial ${doc.catPotency}`; if(doc.catPotency === 'A') potLabel = `Alto Potencial (A)`; if(doc.catPotency === 'B') potLabel = `Medio Potencial (B)`; if(doc.catPotency === 'C') potLabel = `Bajo Potencial (C)`;
+        let loyLabel = `Adopción ${doc.catLoyalty}`; if(doc.catLoyalty === 'A') loyLabel = `Alta Adopción (+)`; if(doc.catLoyalty === 'B') loyLabel = `Media Adopción`; if(doc.catLoyalty === 'C') loyLabel = `Baja Adopción (-)`;
+
+        badgesContainer.innerHTML = `<span class="modal-badge badge-pot-${doc.catPotency}">${potLabel}</span><span class="modal-badge badge-loy-${doc.catLoyalty}">${loyLabel}</span><span class="modal-badge bg-slate-800 text-white">Clasificación final ${doc.matrixLabel}</span>`;
+
+        const gapContainer = document.getElementById('modalGapContainer');
+        if (doc.gap > 0) {
+            gapContainer.className = "bg-orange-50 border border-orange-100 p-3 rounded-lg mb-4 flex justify-between items-center";
+            gapContainer.innerHTML = `<div class="flex items-center gap-2"><span class="material-symbols-outlined text-orange-500">trending_up</span><span class="text-sm font-bold text-orange-800">Oportunidad de Crecimiento</span></div><div class="text-sm text-orange-900">Faltan <span class="font-bold text-lg">${doc.gap} Rx</span> ${doc.targetLabel}</div>`;
+            gapContainer.classList.remove('hidden');
+        } else { gapContainer.classList.add('hidden'); }
+
+        const fichDiv = document.getElementById('modalFicheroData'); const fichContainer = document.getElementById('modalFicheroContainer');
+        const fichHeader = document.getElementById('ficheroSummaryHeader');
+        
+        if(doc.ficheroData && doc.ficheroData.length > 0) {
+            fichDiv.classList.remove('hidden'); 
+            fichContainer.innerHTML = '';
+
+            // AGREGADO: Lógica de conteo de representantes en el header
+            const repCount = doc.ficheroData.length;
+            const repLabel = repCount === 1 ? '1 Rep' : `${repCount} Reps`;
+            const repColor = repCount > 1 ? 'bg-purple-600 text-white' : 'bg-purple-200 text-purple-800';
+            const repTitle = repCount > 1 ? 'COMPARTIDO' : 'EXCLUSIVO';
+
+            fichHeader.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-purple-600">folder_shared</span>
+                    <span>Datos del Fichero</span>
+                    <span class="${repColor} text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ml-2" title="${repTitle}">${repLabel}</span>
+                </div>
+                <span class="material-symbols-outlined text-purple-400 transition-transform group-open:rotate-180">expand_more</span>
+            `;
+            
+            doc.ficheroData.forEach((repData, idx) => {
+                let html = `<div class="mb-4 bg-slate-50 rounded-xl border border-slate-200 shadow-sm relative group overflow-hidden transition hover:border-purple-300">`;
+                
+                const lat = getValueCaseInsensitive(repData, 'GPS_LAT');
+                const lon = getValueCaseInsensitive(repData, 'GPS_LON');
+                let mapBtn = '';
+                
+                if(lat && lon) {
+                    mapBtn = `<a href="https://www.google.com/maps/search/?api=1&query=${lat},${lon}" target="_blank" class="flex items-center gap-1 bg-white border border-slate-200 text-slate-600 px-3 py-1 rounded-lg text-xs font-bold hover:text-blue-600 hover:border-blue-300 transition shadow-sm">
+                        <span class="material-symbols-outlined text-sm text-red-500">location_on</span> Ver Ubicación
+                    </a>`;
+                }
+
+                html += `<div class="flex justify-between items-center p-3 border-b border-slate-100 bg-white">
+                            <div class="flex items-center gap-2">
+                                <span class="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Representante #${idx+1}</span>
+                            </div>
+                            ${mapBtn}
+                         </div>`;
+
+                html += `<div class="p-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">`;
+                Object.entries(repData).forEach(([k,v]) => {
+                     if(v && !k.toUpperCase().includes('GPS')) {
+                         html += `<div><span class="block text-slate-400 font-mono uppercase text-[10px] truncate mb-0.5" title="${k}">${k}</span><span class="font-semibold text-slate-700 break-words">${v}</span></div>`; 
+                     }
+                });
+                
+                html += `</div></div>`;
+                fichContainer.innerHTML += html;
+            });
+            fichDiv.querySelector('details').open = false; 
+        } else { fichDiv.classList.add('hidden'); }
+
+        const content = document.getElementById('modalContent'); content.innerHTML = '';
+        const markets = {}; doc.rows.forEach(r => { if(!markets[r.market]) markets[r.market] = []; markets[r.market].push(r); });
+
+        for(const [mkt, rows] of Object.entries(markets)) {
+            const mktDiv = document.createElement('div'); mktDiv.className = "mb-6 border border-slate-200 rounded-lg overflow-hidden";
+            const mktTotal = rows.reduce((s,r) => s+r.rx, 0); const mktPhq = rows.reduce((s,r) => s + (isPhq(r.prod)?r.rx:0), 0);
+            const mktShare = mktTotal>0 ? (mktPhq/mktTotal)*100 : 0;
+            
+            let mktClass = 'C'; if(mktShare >= TH_LOY_HIGH) mktClass = 'A'; else if(mktShare > TH_LOY_LOW) mktClass = 'B';
+            let mktClassBadge = `<span class="text-xs font-bold text-slate-500 border border-slate-300 px-2 py-0.5 rounded bg-white whitespace-nowrap">Adopción ${mktClass}</span>`;
+            if(mktClass === 'A') mktClassBadge = `<span class="text-xs font-bold text-green-700 border border-green-200 bg-green-50 px-2 py-0.5 rounded whitespace-nowrap">Alta Adopción (+)</span>`;
+            if(mktClass === 'B') mktClassBadge = `<span class="text-xs font-bold text-yellow-700 border border-yellow-200 bg-yellow-50 px-2 py-0.5 rounded whitespace-nowrap">Media Adopción</span>`;
+            if(mktClass === 'C') mktClassBadge = `<span class="text-xs font-bold text-red-700 border border-red-200 bg-red-50 px-2 py-0.5 rounded whitespace-nowrap">Baja Adopción (-)</span>`;
+
+            mktDiv.innerHTML = `<table class="w-full text-xs table-fixed"><thead><tr class="bg-slate-50 border-b border-slate-200"><td class="p-3 w-[46%]"><div class="flex items-center gap-2"><span class="font-bold text-slate-700 text-sm">${mkt}</span>${mktClassBadge}</div></td><td class="p-3 text-right w-[18%]"><span class="text-slate-500 block text-[10px] uppercase">Total Rx</span><b class="text-slate-800 text-sm">${mktTotal}</b></td><td class="p-3 text-right w-[18%]"><span class="text-blue-600 block text-[10px] uppercase">Rx Lab</span><b class="text-blue-700 text-sm">${mktPhq}</b></td><td class="p-3 text-center w-[18%]"><span class="text-slate-500 block text-[10px] uppercase">Share</span><b class="text-slate-800 text-sm">${mktShare.toFixed(1)}%</b></td></tr><tr class="bg-white text-slate-400 border-b border-slate-100"><th class="p-2 text-left font-semibold">Producto</th><th class="p-2 text-right font-semibold">Rx Total</th><th class="p-2 text-right font-semibold">Rx Lab</th><th class="p-2 text-center font-semibold">Tipo</th></tr></thead><tbody class="divide-y divide-slate-100">${rows.sort((a,b)=>b.rx-a.rx).map(r => { const isMyProd = isPhq(r.prod); const rowClass = isMyProd ? 'bg-blue-50/50' : ''; const rxLabVal = isMyProd ? `<span class="font-bold text-blue-600">${r.rx}</span>` : '<span class="text-slate-300">-</span>'; const typeBadge = isMyProd ? '<span class="text-[10px] bg-blue-100 text-blue-700 px-1 rounded font-bold">PHQ</span>' : '<span class="text-[10px] text-slate-400">Comp</span>'; return `<tr class="${rowClass}"><td class="p-2 text-slate-700 font-medium truncate" title="${r.prod}">${r.prod}</td><td class="p-2 text-right font-mono text-slate-600">${r.rx}</td><td class="p-2 text-right font-mono">${rxLabVal}</td><td class="p-2 text-center">${typeBadge}</td></tr>`; }).join('')}</tbody></table>`;
+            content.appendChild(mktDiv);
+        }
+        
+        // --- SCROLL FIX: ---
+        // 1. Mostrar el modal primero
+        document.getElementById('doctorDetailModal').classList.remove('hidden');
+        // 2. Forzar scroll al inicio del contenedor
+        document.getElementById('doctorModalBody').scrollTop = 0;
+    }
+
+    function loadDemo() {
+        document.getElementById('csvInput').value = `Juan P.\t1111\tCardio\tLEPRIT PHQ\t300\tMU1\tAv Siempre Viva\t1234\tCABA\tAMBA\tCardio\tMolecula A\tClase A\tSi\tPHQ
+Juan P.\t1111\tCardio\tNEXIUM\t700\tMU1\tAv Siempre Viva\t1234\tCABA\tAMBA\tCardio\tMolecula B\tClase B\tNo\tAstra
+Maria\t2222\tGastro\tESOZ PHQ\t180\tMU2\tCalle Falsa 123\t5678\tCordoba\tCentro\tGastro\tMolecula C\tClase A\tSi\tPHQ
+Maria\t2222\tGastro\tPANTOPRAZOL\t20\tMU2\tCalle Falsa 123\t5678\tCordoba\tCentro\tGastro\tMolecula D\tClase C\tSi\tGenLab
+Carlos\t3333\tNeumo\tFLUDIL PHQ\t50\tMU3\tSan Martin 400\t9000\tMendoza\tCuyo\tNeumo\tMolecula E\tClase D\tNo\tPHQ
+Carlos\t3333\tNeumo\tAEROLIN\t250\tMU3\tSan Martin 400\t9000\tMendoza\tCuyo\tNeumo\tMolecula F\tClase D\tNo\tGSK
+Ana\t4444\tGen\tXAROX PHQ\t5\tMU4\tBelgrano 500\t2000\tRosario\tLitoral\tClinica\tMolecula G\tClase E\tSi\tPHQ
+Ana\t4444\tGen\tIBUPROFENO\t95\tMU4\tBelgrano 500\t2000\tRosario\tLitoral\tClinica\tMolecula H\tClase E\tSi\tBayer`;
+        processData();
+    }
+</script>
+
+</body>
+</html>

@@ -679,11 +679,15 @@
     let TH_POT_HIGH = 66;
 
     // --- Persistence Logic (LocalForage) ---
-    async function initStorage() {
-       if (sessionData && RAW_DATA.length > 0) {
-    restoreSession(sessionData);
-    return;
+   async function initStorage() {
+    const db = await openDB();
+    const storedSession = await db.get("session", "current");
+
+    if (storedSession && RAW_DATA.length > 0) {
+        restoreSession(storedSession);
+    }
 }
+
         
         // Try to restore session on load
         try {
@@ -901,14 +905,16 @@ async function loadCSVFromGitHub(url) {
 
 
     // --- INITIALIZATION ---
-    window.addEventListener('DOMContentLoaded', async () => {
+  window.addEventListener('DOMContentLoaded', async () => {
     generateMatrixGridHTML();
-    await initStorage();
 
-    if (!RAW_DATA || RAW_DATA.length === 0) {
-        loadDataFromGitHub();
-    }
+    // 1. Cargar datos primero
+    await loadDataFromGitHub();
+
+    // 2. Luego restaurar sesión si existe
+    await initStorage();
 });
+
 
 
 // --- AUTO LOAD DATA FROM GITHUB ---

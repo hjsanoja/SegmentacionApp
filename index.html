@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#0f172a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>PHQ Matrix v15.3 (GitHub)</title>
+    <title>PHQ Matrix v15.3 (Auto-Repo)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&amp;display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap" rel="stylesheet">
@@ -154,7 +154,7 @@
         <div class="flex items-center gap-2 md:gap-3">
             <!-- New Reset Button -->
             <button class="hidden md:flex items-center gap-1 text-slate-300 hover:text-white text-sm font-medium transition" onclick="clearSessionData()">
-                <span class="material-symbols-outlined text-lg">restart_alt</span> Nueva Carga
+                <span class="material-symbols-outlined text-lg">restart_alt</span> Recargar
             </button>
             <div class="h-6 w-px bg-slate-700 hidden md:block"></div>
             <button class="text-slate-300 hover:text-white flex items-center gap-1 text-sm font-medium transition" onclick="document.getElementById('configModal').classList.remove('hidden')">
@@ -162,7 +162,7 @@
             </button>
             
             <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-sm font-bold shadow-lg shadow-blue-900/50 transition flex items-center gap-2" onclick="document.getElementById('uploadModal').classList.remove('hidden')">
-                <span class="material-symbols-outlined">upload</span> <span class="hidden sm:inline">Datos</span>
+                <span class="material-symbols-outlined">upload</span> <span class="hidden sm:inline">Manual</span>
             </button>
         </div>
     </div>
@@ -177,7 +177,7 @@
     <!-- Loading Overlay for Restoration -->
     <div id="restoringSession" class="hidden text-center py-8">
         <span class="material-symbols-outlined text-4xl text-blue-500 animate-spin">sync</span>
-        <p class="text-slate-500 text-sm mt-2 font-medium">Restaurando sesión segura...</p>
+        <p class="text-slate-500 text-sm mt-2 font-medium" id="loadingText">Iniciando...</p>
     </div>
 
     <!-- Analysis Tools Bar -->
@@ -339,14 +339,14 @@
     <div class="flex flex-col items-center justify-center py-20 text-center" id="emptyState">
         <div class="bg-white p-10 rounded-3xl shadow-xl max-w-lg w-full border border-slate-100">
             <div class="w-20 h-20 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                <span class="material-symbols-outlined text-5xl">analytics</span>
+                <span class="material-symbols-outlined text-5xl">cloud_sync</span>
             </div>
-            <h2 class="text-3xl font-bold text-slate-800 mb-2">Análisis Matricial CloseUp</h2>
-            <p class="text-slate-500 mb-8 text-sm leading-relaxed">Sube tu archivo de auditoría con los nuevos campos (Medico, Matricula, Mercado, Px_Product, etc.) para comenzar.</p>
-            <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition shadow-lg shadow-blue-200 flex items-center justify-center gap-2" onclick="document.getElementById('uploadModal').classList.remove('hidden')">
-                <span class="material-symbols-outlined">upload_file</span> Cargar Datos
+            <h2 class="text-3xl font-bold text-slate-800 mb-2">Análisis CloseUp</h2>
+            <p class="text-slate-500 mb-8 text-sm leading-relaxed">No se encontraron datos en memoria. Intenta recargar para obtenerlos del repositorio o carga archivos manualmente.</p>
+            <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition shadow-lg shadow-blue-200 flex items-center justify-center gap-2" onclick="loadRepoData()">
+                <span class="material-symbols-outlined">sync</span> Recargar desde GitHub
             </button>
-            <button class="mt-4 text-sm text-slate-400 hover:text-blue-600 underline" onclick="loadDemo()">Cargar Demo CloseUp</button>
+            <button class="mt-4 text-sm text-slate-400 hover:text-blue-600 underline" onclick="document.getElementById('uploadModal').classList.remove('hidden')">Cargar Manualmente</button>
         </div>
     </div>
 
@@ -504,29 +504,10 @@
     </div>
 </div>
 
-<div class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4" id="codeModal">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col max-h-[90vh]">
-        <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-2xl">
-            <div>
-                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <span class="material-symbols-outlined text-blue-600">code</span> Código Fuente Completo
-                </h3>
-            </div>
-            <button class="text-slate-400 hover:text-slate-700" onclick="document.getElementById('codeModal').classList.add('hidden')"><span class="material-symbols-outlined">close</span></button>
-        </div>
-        <div class="p-0 overflow-hidden flex-1 relative group">
-            <textarea class="w-full h-full bg-slate-900 text-green-400 font-mono text-xs p-4 focus:outline-none resize-none" id="sourceCodeText" readonly=""></textarea>
-            <button class="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white px-3 py-1 rounded text-xs backdrop-blur-sm transition border border-white/20" onclick="copySourceCode()">
-                Copiar Todo
-            </button>
-        </div>
-    </div>
-</div>
-
 <div class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" id="uploadModal">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
         <div class="p-6 border-b border-slate-100 flex justify-between items-center">
-            <h3 class="text-lg font-bold text-slate-800">Cargar Datos</h3>
+            <h3 class="text-lg font-bold text-slate-800">Cargar Datos Manualmente</h3>
             <button class="text-slate-400 hover:text-red-500" onclick="document.getElementById('uploadModal').classList.add('hidden')"><span class="material-symbols-outlined">close</span></button>
         </div>
         <div class="p-6 overflow-y-auto">
@@ -568,7 +549,7 @@
         </div>
         <div class="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 rounded-b-2xl">
             <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold shadow transition flex items-center gap-2" onclick="processData()">
-                <span class="material-symbols-outlined text-sm">rocket_launch</span> Procesar Datos
+                <span class="material-symbols-outlined text-sm">rocket_launch</span> Procesar Datos Manuales
             </button>
         </div>
     </div>
@@ -608,7 +589,6 @@
             </div>
             <button class="text-slate-400 hover:text-slate-700" onclick="document.getElementById('doctorDetailModal').classList.add('hidden')"><span class="material-symbols-outlined">close</span></button>
         </div>
-        <!-- AGREGADO: ID para controlar el scroll -->
         <div class="p-6 overflow-y-auto flex-1 bg-white" id="doctorModalBody">
             <div class="hidden" id="modalGapContainer"></div>
             <div id="modalFicheroData" class="hidden mb-6">
@@ -630,23 +610,22 @@
 </div>
 
 <script>
+    // --- CONFIGURACIÓN DE ARCHIVOS GITHUB ---
+    // Nombres exactos de los archivos que debes subir al repositorio
+    const CONFIG_FILES = {
+        AUDIT: 'datacloseup.csv', 
+        FICHERO: 'fichero_medico.csv'
+    };
+
     // --- SECURITY LAYER (Modo Protegido) ---
     (function() {
-        // Deshabilitar clic derecho
         document.addEventListener('contextmenu', event => event.preventDefault());
-        
-        // Deshabilitar atajos de teclado comunes para inspección
         document.onkeydown = function(e) {
-            // F12
             if (e.keyCode == 123) return false; 
-            // Ctrl+Shift+I (Inspector)
             if (e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
-            // Ctrl+Shift+J (Consola)
             if (e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
-            // Ctrl+U (Ver fuente)
             if (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
         };
-        
         console.log("%c SYSTEM SECURE ", "color: #fff; background: #2563eb; padding: 5px; border-radius: 4px; font-weight: bold;");
     })();
 
@@ -662,13 +641,6 @@
     let CURRENT_COMP_BREAKDOWN = [];
     let FICHERO_MAP = new Map();
     let SHOW_SUMMARIES = false;
-
-    // --- GITHUB DATA SOURCES ---
-    const GITHUB_DATA = {
-    audit: 'https://raw.githubusercontent.com/hjsanoja/AppSegmentacion/main/data/datacloseup.csv',
-    fichero: 'https://raw.githubusercontent.com/hjsanoja/AppSegmentacion/main/data/fichero_medico.csv'
-};
-
     
     // Config States - Adoption (Share)
     let TH_LOY_LOW = 33;
@@ -679,27 +651,21 @@
     let TH_POT_HIGH = 66;
 
     // --- Persistence Logic (LocalForage) ---
-   async function initStorage() {
-    const db = await openDB();
-    const storedSession = await db.get("session", "current");
-
-    if (storedSession && RAW_DATA.length > 0) {
-        restoreSession(storedSession);
-    }
-}
-
+    async function initStorage() {
+        if(!window.localforage) return;
+        localforage.config({ name: 'PHQ_Matrix_DB', storeName: 'session_data' });
         
-        // Try to restore session on load
         try {
             document.getElementById('emptyState').classList.add('hidden');
             document.getElementById('restoringSession').classList.remove('hidden');
 
             const savedAudit = await localforage.getItem('RAW_DATA');
-            const savedFichero = await localforage.getItem('FICHERO_DATA'); // Stored as Array of entries
+            const savedFichero = await localforage.getItem('FICHERO_DATA'); 
             const savedConfig = await localforage.getItem('PHQ_PRODUCTS');
 
             if (savedAudit && savedAudit.length > 0) {
                 console.log("Restoring session from IndexedDB...");
+                safeSetText('loadingText', 'Restaurando sesión guardada...');
                 RAW_DATA = savedAudit;
                 
                 if (savedFichero) {
@@ -710,42 +676,133 @@
                     PHQ_PRODUCTS = savedConfig;
                     document.getElementById('phqConfigInput').value = PHQ_PRODUCTS.join(', ');
                 } else {
-                    loadConfig(); // Load default from HTML
+                    loadConfig(); 
                 }
 
-                // Process without re-reading files
                 await processData(true);
                 showToast("Sesión restaurada correctamente");
             } else {
-                // No session found, show empty state
-                document.getElementById('restoringSession').classList.add('hidden');
-                document.getElementById('emptyState').classList.remove('hidden');
-                loadConfig();
+                // No hay sesión guardada, intentar cargar del repositorio
+                safeSetText('loadingText', 'Buscando datos en el repositorio...');
+                loadRepoData();
             }
         } catch (err) {
             console.error("Storage Error:", err);
+            loadRepoData(); // Intentar cargar del repo si falla el storage
+        }
+    }
+
+    // --- FUNCTION TO LOAD DATA FROM GITHUB ---
+    async function fetchFileAsJson(filename) {
+        try {
+            const response = await fetch(filename);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const arrayBuffer = await response.arrayBuffer();
+            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            return XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+        } catch (error) {
+            console.warn(`Error cargando ${filename}:`, error);
+            return null;
+        }
+    }
+
+    async function loadRepoData() {
+        document.getElementById('emptyState').classList.add('hidden');
+        document.getElementById('restoringSession').classList.remove('hidden');
+        safeSetText('loadingText', 'Descargando archivos del servidor...');
+        loadConfig(); // Cargar configuración de productos por defecto
+
+        try {
+            const [auditData, ficheroData] = await Promise.all([
+                fetchFileAsJson(CONFIG_FILES.AUDIT),
+                fetchFileAsJson(CONFIG_FILES.FICHERO)
+            ]);
+
+            let dataLoaded = false;
+
+            if (ficheroData) {
+                parseFicheroData(ficheroData);
+                console.log(`Fichero cargado: ${ficheroData.length} registros`);
+            }
+
+            if (auditData && auditData.length > 0) {
+                parseAuditData(auditData);
+                console.log(`Auditoría cargada: ${auditData.length} registros`);
+                dataLoaded = true;
+            } else {
+                showToast("No se encontró el archivo de datos (" + CONFIG_FILES.AUDIT + ")");
+            }
+
+            if (dataLoaded) {
+                await processData(true);
+                showToast("Datos cargados desde GitHub exitosamente");
+            } else {
+                document.getElementById('restoringSession').classList.add('hidden');
+                document.getElementById('emptyState').classList.remove('hidden');
+            }
+
+        } catch (error) {
+            console.error("Error en carga automática:", error);
             document.getElementById('restoringSession').classList.add('hidden');
             document.getElementById('emptyState').classList.remove('hidden');
-            loadConfig();
+            showToast("Error conectando con el repositorio");
         }
+    }
+
+    function parseFicheroData(fichJson) {
+        FICHERO_MAP.clear();
+        fichJson.forEach(row => {
+            const keys = Object.keys(row);
+            const keyCol = keys.find(k => k.toLowerCase().includes('matricula') || k.toLowerCase().includes('licencia') || k.toLowerCase().includes('license'));
+            if(keyCol && row[keyCol]) { 
+                const normalizedKey = normalizeKey(row[keyCol]);
+                if(!FICHERO_MAP.has(normalizedKey)) { FICHERO_MAP.set(normalizedKey, []); }
+                FICHERO_MAP.get(normalizedKey).push(row);
+            }
+        });
+    }
+
+    function parseAuditData(json) {
+        RAW_DATA = [];
+        json.forEach(row => {
+            const vals = Object.values(row);
+            // Intenta detectar si es un objeto con keys o un array plano
+            if (!Array.isArray(row) && typeof row === 'object') {
+                 // Si viene de JSON con headers
+                 // Asumimos que las columnas pueden variar, buscamos por nombre aproximado o posición
+                 // Si usamos la estructura de ejemplo del usuario:
+                 // Medico, Matricula, Mercado, Producto, Px_Product, Medico Unico...
+                 // Para robustez, usaremos Object.values asumiendo el orden, ya que es lo que hacia el código original con CSV
+                 // O si las keys coinciden
+            }
+
+            // Fallback a lógica posicional robusta (la misma que tenías)
+            if (vals.length >= 10) { // Reduje a 10 para ser más flexible
+                RAW_DATA.push({
+                    doc: String(vals[0] || "").trim(), license: String(vals[1] || "").trim(), market: String(vals[2] || "").trim(), prod: String(vals[3] || "").trim(), rx: parseInt(vals[4]) || 0,
+                    address: String(vals[6] || "").trim(), zip: String(vals[7] || "").trim(), city: String(vals[8] || "").trim(), region: String(vals[9] || "").trim(),
+                    spec: String(vals[10] || "").trim(), molecule: String(vals[11] || "").trim(), class: String(vals[12] || "").trim(), generic: String(vals[13] || "").trim(), lab: String(vals[14] || "").trim(),
+                });
+            }
+        });
     }
 
     async function saveSession() {
         if(!window.localforage) return;
         try {
             await localforage.setItem('RAW_DATA', RAW_DATA);
-            // Convert Map to Array for storage
             await localforage.setItem('FICHERO_DATA', Array.from(FICHERO_MAP.entries())); 
             await localforage.setItem('PHQ_PRODUCTS', PHQ_PRODUCTS);
             console.log("Session saved to IndexedDB");
         } catch (e) {
             console.error("Save Error:", e);
-            showToast("Error al guardar en memoria local");
         }
     }
 
     async function clearSessionData() {
-        if(confirm("¿Estás seguro? Esto borrará los datos actuales de la memoria y tendrás que cargar el archivo nuevamente.")) {
+        if(confirm("¿Estás seguro? Esto borrará la memoria y recargará la página.")) {
             if(window.localforage) {
                 await localforage.clear();
             }
@@ -887,75 +944,15 @@
 
     function normalizeKey(key) { if(!key) return ""; let s = String(key).trim(); return s.replace(/^0+/, ''); }
 
-    // --- LOAD CSV FROM GITHUB ---
-async function loadCSVFromGitHub(url) {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error("Error cargando " + url);
-
-    const text = await response.text();
-
-    const workbook = XLSX.read(text, {
-        type: "string",
-        FS: ";"
-    });
-
-    return workbook;
-}
-
-
-
     // --- INITIALIZATION ---
-  window.addEventListener('DOMContentLoaded', async () => {
-    generateMatrixGridHTML();
-
-    // 1. Cargar datos primero
-    await loadDataFromGitHub();
-
-    // 2. Luego restaurar sesión si existe
-    await initStorage();
-});
-
-
-
-// --- AUTO LOAD DATA FROM GITHUB ---
-async function loadDataFromGitHub() {
-    try {
-        showToast("Cargando datos desde GitHub...");
-
-        // CloseUp / Auditoría
-        const auditWB = await loadCSVFromGitHub(GITHUB_DATA.audit);
-        const auditSheet = auditWB.Sheets[auditWB.SheetNames[0]];
-        RAW_DATA = XLSX.utils.sheet_to_json(auditSheet, { defval: "" });
-
-        // Fichero Médico
-        const ficheroWB = await loadCSVFromGitHub(GITHUB_DATA.fichero);
-        const ficheroSheet = ficheroWB.Sheets[ficheroWB.SheetNames[0]];
-        const ficheroRows = XLSX.utils.sheet_to_json(ficheroSheet, { defval: "" });
-
-        FICHERO_MAP.clear();
-        ficheroRows.forEach(row => {
-            if (row.Matricula) {
-                FICHERO_MAP.set(String(row.Matricula).trim(), row);
-            }
-        });
-
-        await processData(true);
-        await saveSession();
-
-        showToast("Datos cargados correctamente");
-    } catch (err) {
-        console.error(err);
-        showToast("Error cargando datos desde GitHub");
-    }
-}
-
+    window.addEventListener('DOMContentLoaded', () => { 
+        generateMatrixGridHTML(); 
+        initStorage(); // Start persistence check or auto-load
+    });
 
     function loadConfig() { const input = document.getElementById('phqConfigInput').value; PHQ_PRODUCTS = input.split(/[\n,]+/).map(s => s.trim().toUpperCase()).filter(s => s); }
     function saveConfig() { loadConfig(); document.getElementById('configModal').classList.add('hidden'); saveSession(); if(RAW_DATA.length > 0) processData(true); }
     function isPhq(prodName) { if(!prodName) return false; const upper = prodName.toUpperCase(); return PHQ_PRODUCTS.some(p => upper.includes(p)); }
-
-    function showSourceCode() { document.getElementById('sourceCodeText').value = "<!DOCTYPE html>\n" + document.documentElement.outerHTML; document.getElementById('codeModal').classList.remove('hidden'); }
-    function copySourceCode() { const text = document.getElementById('sourceCodeText'); text.select(); navigator.clipboard.writeText(text.value); alert("Código copiado."); }
 
     // --- Dynamic Threshold Logic ---
     function updateThresholds() {
@@ -1136,8 +1133,9 @@ async function loadDataFromGitHub() {
         const errorEl = document.getElementById('errorMsg');
         errorEl.classList.add('hidden');
         
-        // If not restoring from DB, read from inputs
-        if (!isRestoring) {
+        // --- MANUAL UPLOAD LOGIC ---
+        // Only run if not restoring from persistence or repo load
+        if (!isRestoring && RAW_DATA.length === 0) {
             const textInput = document.getElementById('csvInput').value;
             const auditFileInput = document.getElementById('auditFileInput');
             const ficheroFileInput = document.getElementById('ficheroFileInput');
@@ -1150,35 +1148,16 @@ async function loadDataFromGitHub() {
                 // Process Fichero
                 if (ficheroFileInput.files && ficheroFileInput.files.length > 0) {
                     const fichJson = await readFileAsJson(ficheroFileInput.files[0]);
-                    FICHERO_MAP.clear();
-                    fichJson.forEach(row => {
-                        const keys = Object.keys(row);
-                        const keyCol = keys.find(k => k.toLowerCase().includes('matricula') || k.toLowerCase().includes('licencia') || k.toLowerCase().includes('license'));
-                        if(keyCol && row[keyCol]) { 
-                            const normalizedKey = normalizeKey(row[keyCol]);
-                            if(!FICHERO_MAP.has(normalizedKey)) { FICHERO_MAP.set(normalizedKey, []); }
-                            FICHERO_MAP.get(normalizedKey).push(row);
-                        }
-                    });
+                    parseFicheroData(fichJson);
                 }
 
                 // Process Audit
-                RAW_DATA = [];
                 if (auditFileInput.files && auditFileInput.files.length > 0) {
                     const json = await readFileAsJson(auditFileInput.files[0]);
-                    if (json.length > 0) {
-                        json.forEach(row => {
-                            const vals = Object.values(row);
-                            if (vals.length >= 15) {
-                                RAW_DATA.push({
-                                    doc: String(vals[0] || "").trim(), license: String(vals[1] || "").trim(), market: String(vals[2] || "").trim(), prod: String(vals[3] || "").trim(), rx: parseInt(vals[4]) || 0,
-                                    address: String(vals[6] || "").trim(), zip: String(vals[7] || "").trim(), city: String(vals[8] || "").trim(), region: String(vals[9] || "").trim(),
-                                    spec: String(vals[10] || "").trim(), molecule: String(vals[11] || "").trim(), class: String(vals[12] || "").trim(), generic: String(vals[13] || "").trim(), lab: String(vals[14] || "").trim(),
-                                });
-                            }
-                        });
-                    }
-                } else {
+                    parseAuditData(json);
+                } else if (textInput.trim()) {
+                    // Fallback para texto pegado (CSV/TSV)
+                    RAW_DATA = [];
                     const lines = textInput.split('\n');
                     lines.forEach(line => {
                         const l = line.trim(); if(!l) return; const parts = l.includes('\t') ? l.split('\t') : l.split(',');
@@ -1192,7 +1171,7 @@ async function loadDataFromGitHub() {
                     });
                 }
                 
-                // SAVE SESSION AUTOMATICALLY AFTER PROCESSING
+                // Save manually loaded session
                 saveSession();
 
             } catch (e) {
@@ -1505,7 +1484,6 @@ async function loadDataFromGitHub() {
             fichDiv.classList.remove('hidden'); 
             fichContainer.innerHTML = '';
 
-            // AGREGADO: Lógica de conteo de representantes en el header
             const repCount = doc.ficheroData.length;
             const repLabel = repCount === 1 ? '1 Rep' : `${repCount} Reps`;
             const repColor = repCount > 1 ? 'bg-purple-600 text-white' : 'bg-purple-200 text-purple-800';
@@ -1576,18 +1554,6 @@ async function loadDataFromGitHub() {
         document.getElementById('doctorDetailModal').classList.remove('hidden');
         // 2. Forzar scroll al inicio del contenedor
         document.getElementById('doctorModalBody').scrollTop = 0;
-    }
-
-    function loadDemo() {
-        document.getElementById('csvInput').value = `Juan P.\t1111\tCardio\tLEPRIT PHQ\t300\tMU1\tAv Siempre Viva\t1234\tCABA\tAMBA\tCardio\tMolecula A\tClase A\tSi\tPHQ
-Juan P.\t1111\tCardio\tNEXIUM\t700\tMU1\tAv Siempre Viva\t1234\tCABA\tAMBA\tCardio\tMolecula B\tClase B\tNo\tAstra
-Maria\t2222\tGastro\tESOZ PHQ\t180\tMU2\tCalle Falsa 123\t5678\tCordoba\tCentro\tGastro\tMolecula C\tClase A\tSi\tPHQ
-Maria\t2222\tGastro\tPANTOPRAZOL\t20\tMU2\tCalle Falsa 123\t5678\tCordoba\tCentro\tGastro\tMolecula D\tClase C\tSi\tGenLab
-Carlos\t3333\tNeumo\tFLUDIL PHQ\t50\tMU3\tSan Martin 400\t9000\tMendoza\tCuyo\tNeumo\tMolecula E\tClase D\tNo\tPHQ
-Carlos\t3333\tNeumo\tAEROLIN\t250\tMU3\tSan Martin 400\t9000\tMendoza\tCuyo\tNeumo\tMolecula F\tClase D\tNo\tGSK
-Ana\t4444\tGen\tXAROX PHQ\t5\tMU4\tBelgrano 500\t2000\tRosario\tLitoral\tClinica\tMolecula G\tClase E\tSi\tPHQ
-Ana\t4444\tGen\tIBUPROFENO\t95\tMU4\tBelgrano 500\t2000\tRosario\tLitoral\tClinica\tMolecula H\tClase E\tSi\tBayer`;
-        processData();
     }
 </script>
 

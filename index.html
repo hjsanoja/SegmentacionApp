@@ -664,7 +664,7 @@
     let SHOW_SUMMARIES = false;
 
     // --- GITHUB DATA SOURCES ---
-const GITHUB_DATA = {
+    const GITHUB_DATA = {
     audit: 'https://raw.githubusercontent.com/hjsanoja/AppSegmentacion/main/data/datacloseup.csv',
     fichero: 'https://raw.githubusercontent.com/hjsanoja/AppSegmentacion/main/data/fichero_medico.csv'
 };
@@ -885,9 +885,17 @@ const GITHUB_DATA = {
 async function loadCSVFromGitHub(url) {
     const response = await fetch(url);
     if (!response.ok) throw new Error("Error cargando " + url);
+
     const text = await response.text();
-    return XLSX.read(text, { type: "string" });
+
+    const workbook = XLSX.read(text, {
+        type: "string",
+        FS: ";"
+    });
+
+    return workbook;
 }
+
 
 
     // --- INITIALIZATION ---

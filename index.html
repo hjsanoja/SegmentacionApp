@@ -680,8 +680,10 @@
 
     // --- Persistence Logic (LocalForage) ---
     async function initStorage() {
-        if(!window.localforage) return;
-        localforage.config({ name: 'PHQ_Matrix_DB', storeName: 'session_data' });
+       if (sessionData && RAW_DATA.length > 0) {
+    restoreSession(sessionData);
+    return;
+}
         
         // Try to restore session on load
         try {

@@ -3,109 +3,115 @@
 <head>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-    <meta name="theme-color" content="#0f172a">
+    <meta name="theme-color" content="#f8fafc">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>MatrizAPP v15.3 (hjsanoja)</title>
+    <title>MatrizAPP v15.4</title>
+    <!-- M3 Expressive Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230A56D1'><path d='M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h8v8h-8z'/></svg>">
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&amp;display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
     
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
-    <!-- LocalForage for High Capacity Storage -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
     
     <style>
-        /* PROTECCIÓN DE INTERFAZ */
+        /* M3 Typography & Base */
         body { 
             font-family: 'Inter', sans-serif; 
-            background-color: #f8fafc; 
+            background-color: #F0F4F8; /* M3 Surface/Background */
             -webkit-tap-highlight-color: transparent;
             user-select: none;
             -webkit-user-select: none;
         }
+        h1, h2, h3, h4, .font-display { font-family: 'Outfit', sans-serif; }
         
         /* --- MATRIX GRID SYSTEM --- */
         .matrix-grid {
             display: grid;
-            grid-template-columns: auto 1fr 1fr 1fr;
+            grid-template-columns: auto minmax(200px, 1fr) minmax(200px, 1fr) minmax(200px, 1fr);
             grid-template-rows: auto 1fr 1fr 1fr;
             gap: 16px;
             transition: all 0.3s ease;
         }
 
         .matrix-grid.expanded {
-            grid-template-columns: auto 1fr 1fr 1fr 200px;
+            grid-template-columns: auto minmax(200px, 1fr) minmax(200px, 1fr) minmax(200px, 1fr) 200px;
             grid-template-rows: auto 1fr 1fr 1fr auto;
         }
 
-        .matrix-header-col { text-align: center; font-weight: 600; color: #64748b; padding-bottom: 8px; font-size: 0.85rem; text-transform: uppercase; }
-        .matrix-header-row { display: flex; align-items: center; justify-content: center; font-weight: 600; color: #64748b; writing-mode: vertical-rl; transform: rotate(180deg); font-size: 0.85rem; text-transform: uppercase; gap: 4px; }
-        .summary-header-title { font-weight: 800; color: #64748b; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; text-align: center; padding: 8px; display: flex; align-items: flex-end; justify-content: center; height: 100%; }
+        .matrix-header-col { text-align: center; font-weight: 600; color: #44474E; padding-bottom: 8px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .matrix-header-row { display: flex; align-items: center; justify-content: center; font-weight: 600; color: #44474E; writing-mode: vertical-rl; transform: rotate(180deg); font-size: 0.85rem; text-transform: uppercase; gap: 4px; letter-spacing: 0.5px; }
+        .summary-header-title { font-weight: 800; color: #44474E; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; text-align: center; padding: 8px; display: flex; align-items: flex-end; justify-content: center; height: 100%; }
         
+        /* M3 Cell Styles - Expressive Palette */
         .matrix-cell {
-            background: white; border: 1px solid #e2e8f0; border-radius: 16px;
+            border-radius: 24px;
             padding: 16px; display: flex; flex-direction: column; 
             cursor: pointer; position: relative; min-height: 220px;
             overflow: visible; box-sizing: border-box; opacity: 0; 
+            transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.3s cubic-bezier(0.2, 0, 0, 1), filter 0.3s;
             animation: fadePopIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            border: none;
+            box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
         }
 
-        .matrix-cell.pulse-active {
-            animation: fadePopIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, pulse-glow 2s infinite 0.6s;
-        }
+        /* Expressive Colors per Quadrant */
+        .cell-A_A { background-color: #C4EED0; color: #003915; } /* A+ Green */
+        .cell-A_B { background-color: #FFDDB3; color: #2E1500; } /* A Yellow/Orange */
+        .cell-A_C { background-color: #FFDAD6; color: #410002; } /* A- Red/Pink */
         
-        @keyframes fadePopIn { 0% { opacity: 0; transform: scale(0.9) translateY(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
-        @keyframes pulse-glow { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); border-color: #e2e8f0; } 50% { border-color: #3b82f6; } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); border-color: #e2e8f0; } }
+        .cell-B_A { background-color: #D3E3FD; color: #001C3B; } /* B+ Light Blue */
+        .cell-B_B { background-color: #FDECA6; color: #221B00; } /* B Amber */
+        .cell-B_C { background-color: #FEE4E2; color: #3B090E; } /* B- Rose */
+        
+        .cell-C_A { background-color: #E8DEF8; color: #1D192B; } /* C+ Purple/Lilac */
+        .cell-C_B { background-color: #E0E2EC; color: #191C20; } /* C Neutral Surface */
+        .cell-C_C { background-color: #F3F4F9; color: #191C20; } /* C- Lighter Surface */
 
-        .matrix-cell:hover { transform: translateY(-5px) !important; box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.15); border-color: #94a3b8 !important; z-index: 20; }
+        @keyframes fadePopIn { 0% { opacity: 0; transform: scale(0.9) translateY(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+
+        .matrix-cell:hover { transform: translateY(-4px) scale(1.02) !important; box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.12); z-index: 20; filter: brightness(0.97); }
+        .matrix-cell.selected { box-shadow: 0 0 0 4px #0A56D1, 0 12px 24px -4px rgba(0, 0, 0, 0.12); transform: scale(1.02); z-index: 25; }
         
         .cell-tooltip {
             position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%) translateY(-10px);
-            background: #1e293b; color: white; padding: 8px 12px; border-radius: 8px; font-size: 0.75rem;
-            width: max-content; max-width: 180px; pointer-events: none; opacity: 0; transition: opacity 0.2s, transform 0.2s;
+            background: #1D192B; color: #F4EFF4; padding: 8px 16px; border-radius: 12px; font-size: 0.75rem;
+            width: max-content; max-width: 200px; pointer-events: none; opacity: 0; transition: opacity 0.2s, transform 0.2s;
             z-index: 50; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+            font-family: 'Inter', sans-serif;
         }
-        .cell-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -6px; border-width: 6px; border-style: solid; border-color: #1e293b transparent transparent transparent; }
+        .cell-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -6px; border-width: 6px; border-style: solid; border-color: #1D192B transparent transparent transparent; }
         .matrix-cell:hover .cell-tooltip { opacity: 1; transform: translateX(-50%) translateY(-5px); }
 
-        .matrix-cell-summary { background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; justify-content: center; min-height: 220px; color: #64748b; }
+        .matrix-cell-summary { background: #E0E2EC; border-radius: 24px; padding: 16px; display: flex; flex-direction: column; justify-content: center; min-height: 220px; color: #44474E; }
         .summary-element { display: none; }
         .summary-element.show { display: flex; }
         
-        .matrix-cell.theme-red.selected { background-color: #fef2f2; border-color: #ef4444; box-shadow: 0 0 0 4px #fee2e2, inset 0 0 0 1px #ef4444; }
-        .matrix-cell.theme-yellow.selected { background-color: #fefce8; border-color: #eab308; box-shadow: 0 0 0 4px #fef08a, inset 0 0 0 1px #eab308; }
-        .matrix-cell.theme-green.selected { background-color: #f0fdf4; border-color: #22c55e; box-shadow: 0 0 0 4px #bbf7d0, inset 0 0 0 1px #22c55e; }
-        .matrix-cell.theme-blue.selected { background-color: #eff6ff; border-color: #3b82f6; box-shadow: 0 0 0 4px #bfdbfe, inset 0 0 0 1px #3b82f6; }
-        .matrix-cell.theme-slate.selected { background-color: #f8fafc; border-color: #64748b; box-shadow: 0 0 0 4px #e2e8f0, inset 0 0 0 1px #64748b; }
-
         .stats-drawer { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, opacity 0.3s ease-out; opacity: 0; }
-        .stats-drawer.open { max-height: 50px; opacity: 1; margin-top: 8px; padding-top: 8px; border-top: 1px dashed #e2e8f0; }
+        .stats-drawer.open { max-height: 50px; opacity: 1; margin-top: 8px; padding-top: 8px; border-top: 1px dashed rgba(0,0,0,0.1); }
 
-        .checkbox-item { display: flex; align-items: center; padding: 6px 8px; cursor: pointer; border-radius: 4px; }
-        .checkbox-item:hover { background-color: #f1f5f9; }
-        .checkbox-item input { margin-right: 8px; accent-color: #2563eb; }
+        .checkbox-item { display: flex; align-items: center; padding: 8px 12px; cursor: pointer; border-radius: 12px; transition: background 0.2s; }
+        .checkbox-item:hover { background-color: #E0E2EC; }
+        .checkbox-item input { margin-right: 12px; accent-color: #0A56D1; width: 18px; height: 18px; }
 
-        .modal-badge { padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; display: inline-flex; align-items: center; gap: 4px; }
-        .badge-pot-A { background: #e9d5ff; color: #6b21a8; }
-        .badge-pot-B { background: #f1f5f9; color: #475569; }
-        .badge-pot-C { background: #f8fafc; color: #94a3b8; border: 1px solid #e2e8f0; }
-        .badge-loy-A { background: #dcfce7; color: #15803d; }
-        .badge-loy-B { background: #fef9c3; color: #854d0e; }
-        .badge-loy-C { background: #fee2e2; color: #991b1b; }
-        .badge-gap { background-color: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; font-family: monospace; font-weight: 700; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; }
+        .modal-badge { padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.5px; }
+        
+        .badge-gap { background-color: #FFDAD6; color: #410002; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 0.75rem; padding: 4px 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
         input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #3b82f6; cursor: pointer; margin-top: -6px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #cbd5e1; border-radius: 2px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #0A56D1; cursor: pointer; margin-top: -8px; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: transform 0.1s; }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #C4C7C5; border-radius: 2px; }
         
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-thumb { background: #C4C7C5; border-radius: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
 
         @media print {
             .no-print { display: none !important; }
@@ -116,53 +122,63 @@
         .animate-fade-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .file-drop-area { position: relative; display: flex; align-items: center; padding: 20px; border: 2px dashed #cbd5e1; border-radius: 12px; transition: 0.2s; background: #f8fafc; }
-        .file-drop-area:hover { border-color: #3b82f6; background: #eff6ff; }
-        .fake-btn { background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px; margin-right: 15px; font-size: 12px; font-weight: bold; text-transform: uppercase; color: #64748b; }
-        .file-msg { font-size: 12px; color: #94a3b8; }
+        .file-drop-area { position: relative; display: flex; align-items: center; padding: 24px; border: 2px dashed #74777F; border-radius: 16px; transition: 0.2s; background: #F3F4F9; }
+        .file-drop-area:hover { border-color: #0A56D1; background: #E8DEF8; }
+        .fake-btn { background: #0A56D1; border-radius: 20px; padding: 8px 16px; margin-right: 15px; font-size: 12px; font-weight: bold; text-transform: uppercase; color: #FFFFFF; transition: background 0.2s; }
+        .file-drop-area:hover .fake-btn { background: #003915; }
+        .file-msg { font-size: 13px; color: #44474E; font-weight: 500; }
         .file-input { position: absolute; left: 0; top: 0; height: 100%; width: 100%; cursor: pointer; opacity: 0; }
         
-        .kpi-card { transition: all 0.2s; }
-        .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .kpi-card { transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s; border-radius: 24px; border: none; box-shadow: 0 4px 8px -2px rgba(0,0,0,0.05); }
+        .kpi-card:hover { transform: translateY(-4px); box-shadow: 0 12px 20px -4px rgba(0, 0, 0, 0.1); }
 
-        .filter-group-label { font-size: 0.65rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; margin-left: 2px; }
-        .filter-select { font-size: 0.8rem; padding: 6px; border-radius: 6px; border: 1px solid #cbd5e1; width: 100%; background-color: #f8fafc; }
+        .filter-group-label { font-size: 0.7rem; font-weight: 700; color: #44474E; text-transform: uppercase; margin-bottom: 6px; margin-left: 4px; letter-spacing: 0.5px; }
+        .filter-select { font-size: 0.85rem; padding: 10px 12px; border-radius: 12px; border: 1px solid #C4C7C5; width: 100%; background-color: #FFFFFF; font-family: 'Inter', sans-serif; transition: border-color 0.2s; outline: none; }
+        .filter-select:focus { border-color: #0A56D1; box-shadow: 0 0 0 2px rgba(10, 86, 209, 0.2); }
 
-        .icon-inline { font-size: 12px; vertical-align: middle; margin-right: 2px; margin-bottom: 2px; }
-        .letter-display { font-family: 'Nunito', sans-serif; font-weight: 900; letter-spacing: 0; }
+        .icon-inline { font-size: 14px; vertical-align: middle; margin-right: 2px; margin-bottom: 2px; }
+        .letter-display { font-family: 'Outfit', sans-serif; font-weight: 900; letter-spacing: -1px; }
 
-        /* Toast Notification */
         #toast {
-            visibility: hidden; min-width: 250px; background-color: #1e293b; color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; z-index: 100; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 14px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); opacity: 0; transition: opacity 0.3s, bottom 0.3s;
+            visibility: hidden; min-width: 250px; background-color: #313033; color: #F4EFF4; text-align: center; border-radius: 12px; padding: 16px; position: fixed; z-index: 100; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 14px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2); opacity: 0; transition: opacity 0.3s, bottom 0.3s; font-family: 'Inter', sans-serif;
         }
         #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+
+        /* Estilo para Scroll Horizontal en móviles */
+        .responsive-table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
     </style>
 </head>
 <body class="text-slate-800">
 
-<!-- Top Navigation -->
-<nav class="bg-slate-900 text-white shadow-lg fixed w-full z-50 no-print">
+<!-- Top Navigation M3 -->
+<nav class="bg-white text-slate-800 shadow-sm fixed w-full z-50 no-print border-b border-slate-200">
     <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         <div class="flex items-center gap-3">
-            <div class="bg-blue-600 p-1.5 rounded flex items-center justify-center">
-                <span class="material-symbols-outlined text-white">ssid_chart</span>
+            <div class="bg-blue-50 text-blue-600 p-2 rounded-xl flex items-center justify-center">
+                <span class="material-symbols-outlined text-2xl">grid_view</span>
             </div>
-            <div>
-                <h1 class="font-bold text-lg leading-tight">Matriz <span class="font-light text-blue-300">15.3 Dev H. Sanoja</span></h1>
+            <div class="flex flex-col justify-center">
+                <h1 class="font-display font-bold text-xl leading-tight text-slate-800 tracking-tight">MatrizAPP</h1>
+                <span class="text-[10px] text-slate-500 font-medium tracking-wide">v15.4 • Dev H. Sanoja</span>
             </div>
         </div>
-        <div class="flex items-center gap-2 md:gap-3">
-            <!-- New Reset Button -->
-            <button class="hidden md:flex items-center gap-1 text-slate-300 hover:text-white text-sm font-medium transition" onclick="clearSessionData()">
+        <div class="flex items-center gap-2 md:gap-4">
+            
+            <!-- Botón Admin Lock -->
+            <button class="text-slate-400 hover:text-slate-700 flex items-center justify-center transition p-2 rounded-full hover:bg-slate-100" onclick="authenticateAdmin()" title="Modo Administrador">
+                <span class="material-symbols-outlined text-xl" id="btnAdminLock">lock</span>
+            </button>
+
+            <button class="hidden md:flex items-center gap-1 text-slate-500 hover:text-slate-800 text-sm font-semibold transition" onclick="clearSessionData()">
                 <span class="material-symbols-outlined text-lg">restart_alt</span> Recargar
             </button>
-            <div class="h-6 w-px bg-slate-700 hidden md:block"></div>
-            <button class="text-slate-300 hover:text-white flex items-center gap-1 text-sm font-medium transition" onclick="document.getElementById('configModal').classList.remove('hidden')">
-                <span class="material-symbols-outlined text-lg">settings</span> <span class="hidden sm:inline">Config</span>
+            <div class="h-6 w-px bg-slate-200 hidden md:block"></div>
+            <button class="text-slate-500 hover:text-slate-800 flex items-center gap-1 text-sm font-semibold transition" onclick="openProductModal()">
+                <span class="material-symbols-outlined text-lg">medication</span> <span class="hidden sm:inline">Productos</span>
             </button>
             
-            <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-sm font-bold shadow-lg shadow-blue-900/50 transition flex items-center gap-2" onclick="document.getElementById('uploadModal').classList.remove('hidden')">
-                <span class="material-symbols-outlined">upload</span> <span class="hidden sm:inline">Manual</span>
+            <button id="btnUploadData" class="hidden bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full text-sm font-bold shadow-md transition items-center gap-2" onclick="document.getElementById('uploadModal').classList.remove('hidden')">
+                <span class="material-symbols-outlined text-sm">upload</span> <span class="hidden sm:inline">Cargar Datos</span>
             </button>
         </div>
     </div>
@@ -174,22 +190,22 @@
 <!-- Main Content -->
 <main class="max-w-7xl mx-auto px-4 pt-24 pb-12">
     
-    <!-- Loading Overlay for Restoration -->
-    <div id="restoringSession" class="hidden text-center py-8">
-        <span class="material-symbols-outlined text-4xl text-blue-500 animate-spin">sync</span>
-        <p class="text-slate-500 text-sm mt-2 font-medium" id="loadingText">Iniciando...</p>
+    <!-- Loading Overlay -->
+    <div id="restoringSession" class="hidden text-center py-12">
+        <span class="material-symbols-outlined text-5xl text-blue-600 animate-spin">sync</span>
+        <p class="text-slate-600 text-sm mt-3 font-medium font-display" id="loadingText">Iniciando sistema...</p>
     </div>
 
-    <!-- Analysis Tools Bar -->
-    <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl mb-4 flex flex-wrap gap-8 items-center shadow-sm no-print animate-fade-in hidden" id="analysisTools">
-        <div class="flex items-center gap-2 text-slate-500 mr-2 border-r border-slate-200 pr-4">
-            <span class="material-symbols-outlined">tune</span>
-            <span class="text-xs font-bold uppercase">Umbrales</span>
+    <!-- Analysis Tools Bar (Oculto para no-admins) -->
+    <div class="bg-white border border-slate-200 p-5 rounded-3xl mb-6 flex flex-wrap gap-8 items-center shadow-sm no-print animate-fade-in hidden" id="analysisTools">
+        <div class="flex items-center gap-2 text-slate-600 mr-2 border-r border-slate-200 pr-6">
+            <span class="material-symbols-outlined text-2xl">tune</span>
+            <span class="text-xs font-bold uppercase tracking-widest">Umbrales<br><span class="text-[9px] text-slate-400 font-normal">Admin Mode</span></span>
         </div>
 
         <!-- Sliders Adopción (Eje X) -->
-        <div class="flex flex-col gap-1 w-full sm:w-64">
-            <div class="flex justify-between text-[10px] font-bold text-slate-500 uppercase mb-1">
+        <div class="flex flex-col gap-2 w-full sm:w-64">
+            <div class="flex justify-between text-[10px] font-bold text-slate-500 uppercase">
                 <span>Adopción (Loyalty)</span>
             </div>
             <div class="flex justify-between text-[10px] font-bold text-slate-400">
@@ -198,16 +214,16 @@
             <input type="range" min="10" max="50" value="33" id="sliderLow" oninput="updateThresholds()">
             
             <div class="flex justify-between text-[10px] font-bold text-slate-400 mt-1">
-                <span>Medio/Alto: <span id="lblThHigh" class="text-green-600">65%</span></span>
+                <span>Medio/Alto: <span id="lblThHigh" class="text-green-600">66%</span></span>
             </div>
-            <input type="range" min="51" max="90" value="65" id="sliderHigh" oninput="updateThresholds()">
+            <input type="range" min="51" max="90" value="66" id="sliderHigh" oninput="updateThresholds()">
         </div>
 
         <div class="h-20 w-px bg-slate-200 hidden sm:block"></div>
 
         <!-- Sliders Potencialidad (Eje Y) -->
-        <div class="flex flex-col gap-1 w-full sm:w-64">
-             <div class="flex justify-between text-[10px] font-bold text-slate-500 uppercase mb-1">
+        <div class="flex flex-col gap-2 w-full sm:w-64">
+             <div class="flex justify-between text-[10px] font-bold text-slate-500 uppercase">
                 <span>Potencialidad (Volumen)</span>
             </div>
             <div class="flex justify-between text-[10px] font-bold text-slate-400">
@@ -227,31 +243,31 @@
         </div>
     </div>
 
-    <!-- Filters Bar -->
-    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 mb-6 flex flex-col gap-4 no-print animate-fade-in hidden" id="filterBar">
-        <div class="flex justify-between items-center border-b border-slate-100 pb-2 mb-1">
-            <div class="flex items-center gap-2 text-slate-600">
-                <div class="bg-slate-100 p-1.5 rounded-full"><span class="material-symbols-outlined text-lg">filter_alt</span></div>
-                <span class="font-bold text-sm uppercase tracking-wide">Filtros</span>
+    <!-- Filters Bar M3 -->
+    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 mb-8 flex flex-col gap-5 no-print animate-fade-in hidden" id="filterBar">
+        <div class="flex flex-col md:flex-row justify-between md:items-center gap-4 border-b border-slate-100 pb-4">
+            <div class="flex items-center gap-3 text-slate-700">
+                <div class="bg-slate-100 p-2 rounded-full"><span class="material-symbols-outlined text-xl">filter_list</span></div>
+                <span class="font-display font-bold text-base tracking-wide">Panel de Filtros</span>
             </div>
-            <!-- Global Search (Fixed: No Icon, Dual Search) -->
-            <div class="w-72">
-                <input type="text" id="globalSearch" placeholder="Buscar por Nombre Med o Matrícula..." class="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 outline-none transition" onkeyup="renderTable()">
+            <div class="w-full md:w-80 relative">
+                <span class="material-symbols-outlined absolute left-3 top-2.5 text-slate-400 text-sm">search</span>
+                <input type="text" id="globalSearch" placeholder="Buscar por Nombre Médico o Matrícula..." class="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-full text-sm focus:ring-2 focus:ring-blue-500 outline-none transition bg-slate-50 hover:bg-white" onkeyup="renderTable()">
             </div>
         </div>
         
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <!-- 1. Market Multi-Select -->
             <div class="relative">
-                <div class="filter-group-label">Mercados (Multi)</div>
-                <button class="w-full bg-slate-50 border border-slate-300 text-slate-700 text-xs font-semibold rounded-lg p-2 text-left flex justify-between items-center" id="marketDropdownBtn" onclick="toggleMarketDropdown()">
-                    <span id="marketBtnText">Todos</span>
+                <div class="filter-group-label">Mercados</div>
+                <button class="w-full bg-slate-50 border border-slate-300 text-slate-700 text-sm rounded-xl p-2.5 text-left flex justify-between items-center transition hover:border-blue-400" id="marketDropdownBtn" onclick="toggleMarketDropdown()">
+                    <span id="marketBtnText" class="truncate font-medium">Todos</span>
                     <span class="material-symbols-outlined text-sm">arrow_drop_down</span>
                 </button>
-                <div class="hidden absolute top-full left-0 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto p-2" id="marketDropdownPanel">
-                    <div class="checkbox-item border-b border-slate-100 mb-1 pb-1">
+                <div class="hidden absolute top-full left-0 w-full mt-2 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 max-h-64 overflow-y-auto p-2" id="marketDropdownPanel">
+                    <div class="checkbox-item border-b border-slate-100 mb-2 pb-2">
                         <input checked="" id="selectAllMarkets" onchange="toggleAllMarkets(this.checked)" type="checkbox">
-                        <span class="text-xs font-bold text-blue-600">Seleccionar Todos</span>
+                        <span class="text-sm font-bold text-blue-700">Seleccionar Todos</span>
                     </div>
                     <div class="space-y-1" id="marketListContainer"></div>
                 </div>
@@ -265,13 +281,11 @@
                 </select>
             </div>
 
-            <!-- 3. Fichero Filter -->
+            <!-- 3. Representante Filter -->
             <div>
-                <div class="filter-group-label">Estado Fichero</div>
-                <select class="filter-select" id="filterFichero" onchange="applyFilters()">
-                    <option value="all">Todos</option>
-                    <option value="fichado">✅ Fichados</option>
-                    <option value="nofichado">❌ No Fichados</option>
+                <div class="filter-group-label">Representante</div>
+                <select class="filter-select" id="filterRep" onchange="applyFilters()">
+                    <option value="all">Todos (Fichados y No Fichados)</option>
                 </select>
             </div>
 
@@ -323,30 +337,32 @@
                 </select>
             </div>
 
-            <!-- Exports (Colspan to fill) -->
-            <div class="flex gap-2 items-end justify-end lg:col-span-3">
-                <button class="flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg text-xs font-semibold transition border border-green-200" onclick="exportExcel()">
+            <!-- Exports -->
+            <div class="flex gap-2 items-end justify-end">
+                <button class="flex items-center gap-1 px-4 py-2.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-xl text-sm font-bold transition border border-green-200 w-full justify-center" onclick="exportExcel()">
                     <span class="material-symbols-outlined text-sm">table_view</span> Excel
                 </button>
-                <button class="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-xs font-semibold transition border border-red-200" onclick="exportPDF()">
+                <button class="flex items-center gap-1 px-4 py-2.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-xl text-sm font-bold transition border border-red-200 w-full justify-center" onclick="exportPDF()">
                     <span class="material-symbols-outlined text-sm">picture_as_pdf</span> PDF
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Empty State -->
-    <div class="flex flex-col items-center justify-center py-20 text-center" id="emptyState">
-        <div class="bg-white p-10 rounded-3xl shadow-xl max-w-lg w-full border border-slate-100">
-            <div class="w-20 h-20 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+    <!-- Empty State M3 -->
+    <div class="flex flex-col items-center justify-center py-16 text-center" id="emptyState">
+        <div class="bg-white p-12 rounded-[2rem] shadow-sm max-w-lg w-full border border-slate-200">
+            <div class="w-24 h-24 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <span class="material-symbols-outlined text-5xl">cloud_sync</span>
             </div>
-            <h2 class="text-3xl font-bold text-slate-800 mb-2">Análisis CloseUp</h2>
-            <p class="text-slate-500 mb-8 text-sm leading-relaxed">No se encontraron datos en memoria. Intenta recargar para obtenerlos del repositorio o carga archivos manualmente.</p>
-            <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition shadow-lg shadow-blue-200 flex items-center justify-center gap-2" onclick="loadRepoData()">
-                <span class="material-symbols-outlined">sync</span> Recargar desde GitHub
+            <h2 class="text-3xl font-display font-bold text-slate-800 mb-3">Matriz Estratégica</h2>
+            <p class="text-slate-500 mb-8 text-sm leading-relaxed">No se encontraron datos en memoria. Intenta recargar para obtenerlos del repositorio o ingresa al modo Admin para cargar archivos manualmente.</p>
+            <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-full transition shadow-md flex items-center justify-center gap-2" onclick="loadRepoData()">
+                <span class="material-symbols-outlined">sync</span> Sincronizar desde Servidor
             </button>
-            <button class="mt-4 text-sm text-slate-400 hover:text-blue-600 underline" onclick="document.getElementById('uploadModal').classList.remove('hidden')">Cargar Manualmente</button>
+            <button class="mt-6 text-sm text-slate-400 hover:text-blue-600 font-medium flex items-center justify-center gap-1 mx-auto" onclick="authenticateAdmin()">
+                <span class="material-symbols-outlined text-[16px]">admin_panel_settings</span> Activar Modo Admin
+            </button>
         </div>
     </div>
 
@@ -356,103 +372,103 @@
         <!-- INTELLIGENCE ROW -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <!-- Competitor Radar -->
-            <div class="bg-white p-5 rounded-xl border-l-4 border-red-500 shadow-sm relative overflow-hidden col-span-1">
+            <div class="bg-white p-6 rounded-3xl border-l-4 border-rose-500 shadow-sm relative overflow-hidden col-span-1">
                 <div class="flex justify-between items-start mb-3">
-                    <h3 class="font-bold text-slate-700 text-sm uppercase tracking-wide">Amenaza Principal</h3>
-                    <span class="material-symbols-outlined text-red-200 text-3xl">warning</span>
+                    <h3 class="font-bold text-slate-600 text-xs uppercase tracking-widest">Amenaza Principal</h3>
+                    <span class="material-symbols-outlined text-rose-200 text-3xl">warning</span>
                 </div>
                 <div id="topCompetitorContainer">
-                    <h2 class="text-2xl font-bold text-slate-800" id="topCompName">--</h2>
-                    <p class="text-sm text-slate-500 mt-1"><span class="font-mono font-bold text-red-600" id="topCompRx">0</span> Rx en la muestra actual</p>
+                    <h2 class="text-3xl font-display font-bold text-slate-800" id="topCompName">--</h2>
+                    <p class="text-sm text-slate-500 mt-2"><span class="font-mono font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded" id="topCompRx">0</span> Rx en mercado</p>
                 </div>
             </div>
 
             <!-- Market Composition Bar -->
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm col-span-2 flex flex-col justify-center cursor-pointer group hover:border-blue-300 transition" onclick="showMarketDetails()">
-                <div class="flex justify-between items-center mb-3">
-                    <h3 class="font-bold text-slate-700 text-sm uppercase tracking-wide">Composición del Mercado</h3>
-                    <span class="text-xs text-blue-500 bg-blue-50 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition flex items-center gap-1">
-                        <span class="material-symbols-outlined text-xs">info</span> Ver detalle
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm col-span-2 flex flex-col justify-center cursor-pointer group hover:border-blue-300 transition" onclick="showMarketDetails()">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-slate-600 text-xs uppercase tracking-widest">Composición del Mercado</h3>
+                    <span class="text-xs text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full font-semibold opacity-0 group-hover:opacity-100 transition flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">read_more</span> Ver Ranking
                     </span>
                 </div>
-                <div class="w-full h-8 flex rounded-full overflow-hidden mb-2 bg-slate-100 shadow-inner">
+                <div class="w-full h-8 flex rounded-full overflow-hidden mb-3 bg-slate-100 shadow-inner">
                     <div class="bg-blue-600 h-full flex items-center justify-center text-[10px] font-bold text-white transition-all duration-1000" id="barPhq" style="width: 0%">PHQ</div>
-                    <div class="bg-red-400 h-full flex items-center justify-center text-[10px] font-bold text-white transition-all duration-1000" id="barComp" style="width: 0%">Top Comp</div>
+                    <div class="bg-rose-400 h-full flex items-center justify-center text-[10px] font-bold text-white transition-all duration-1000" id="barComp" style="width: 0%">Top Comp</div>
                     <div class="bg-slate-300 h-full flex items-center justify-center text-[10px] font-bold text-slate-600 transition-all duration-1000" id="barRest" style="width: 100%">Resto</div>
                 </div>
-                <div class="flex justify-between text-xs text-slate-500 px-1">
-                    <span id="labelPhq">PHQ: 0%</span>
-                    <span id="labelComp">Competencia: 0%</span>
+                <div class="flex justify-between text-xs font-medium text-slate-500 px-2">
+                    <span id="labelPhq" class="text-blue-700">PHQ: 0%</span>
+                    <span id="labelComp" class="text-rose-600">Competencia: 0%</span>
                     <span id="labelRest">Resto: 0%</span>
                 </div>
             </div>
         </div>
 
-        <!-- Summary Stats -->
+        <!-- Summary Stats M3 -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div class="bg-white p-4 rounded-xl border border-slate-200 text-center kpi-card">
-                <div class="flex items-center justify-center gap-2 mb-1">
-                    <span class="material-symbols-outlined text-slate-400 text-lg">groups</span>
-                    <p class="text-[10px] text-slate-400 uppercase font-bold">Total Médicos</p>
+            <div class="bg-white p-5 rounded-3xl border border-slate-200 text-center kpi-card">
+                <div class="flex items-center justify-center gap-2 mb-2">
+                    <span class="material-symbols-outlined text-slate-400">groups</span>
+                    <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Total Médicos</p>
                 </div>
-                <p class="text-2xl font-black text-slate-800" id="statTotalDocs">0</p>
+                <p class="text-3xl font-display font-black text-slate-800" id="statTotalDocs">0</p>
             </div>
-            <div class="bg-white p-4 rounded-xl border border-slate-200 text-center kpi-card">
-                <div class="flex items-center justify-center gap-2 mb-1">
-                    <span class="material-symbols-outlined text-slate-400 text-lg">receipt_long</span>
-                    <p class="text-[10px] text-slate-400 uppercase font-bold">Recetas Totales</p>
+            <div class="bg-white p-5 rounded-3xl border border-slate-200 text-center kpi-card">
+                <div class="flex items-center justify-center gap-2 mb-2">
+                    <span class="material-symbols-outlined text-slate-400">receipt_long</span>
+                    <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Recetas Mercado</p>
                 </div>
-                <p class="text-2xl font-black text-slate-800" id="statTotalMkt">0</p>
+                <p class="text-3xl font-display font-black text-slate-800" id="statTotalMkt">0</p>
             </div>
-            <div class="bg-white p-4 rounded-xl border border-slate-200 text-center kpi-card">
-                <div class="flex items-center justify-center gap-2 mb-1">
-                    <span class="material-symbols-outlined text-blue-400 text-lg">pill</span>
-                    <p class="text-[10px] text-blue-500 uppercase font-bold">Recetas Lab</p>
+            <div class="bg-blue-50 p-5 rounded-3xl border border-blue-100 text-center kpi-card">
+                <div class="flex items-center justify-center gap-2 mb-2">
+                    <span class="material-symbols-outlined text-blue-500">pill</span>
+                    <p class="text-[10px] text-blue-600 uppercase font-bold tracking-wider">Recetas Lab (PHQ)</p>
                 </div>
-                <p class="text-2xl font-black text-blue-600" id="statMyRx">0</p>
+                <p class="text-3xl font-display font-black text-blue-700" id="statMyRx">0</p>
             </div>
-            <div class="bg-white p-4 rounded-xl border border-slate-200 text-center kpi-card">
-                <div class="flex items-center justify-center gap-2 mb-1">
-                    <span class="material-symbols-outlined text-green-500 text-lg">pie_chart</span>
-                    <p class="text-[10px] text-green-600 uppercase font-bold">Share Total</p>
+            <div class="bg-green-50 p-5 rounded-3xl border border-green-100 text-center kpi-card">
+                <div class="flex items-center justify-center gap-2 mb-2">
+                    <span class="material-symbols-outlined text-green-600">pie_chart</span>
+                    <p class="text-[10px] text-green-700 uppercase font-bold tracking-wider">Share Promedio</p>
                 </div>
-                <p class="text-2xl font-black text-green-700" id="statShare">0%</p>
+                <p class="text-3xl font-display font-black text-green-800" id="statShare">0%</p>
             </div>
         </div>
 
-        <!-- 9-Box Matrix -->
-        <div class="mb-10 overflow-x-auto pb-4">
+        <!-- 9-Box Matrix M3 -->
+        <div class="mb-10 overflow-x-auto pb-6">
             <div class="flex justify-between items-center mb-6 min-w-[700px]">
-                <h3 class="font-bold text-slate-800 flex items-center gap-2 text-lg">
-                    <span class="material-symbols-outlined text-blue-600">grid_view</span>
-                    Matriz Estratégica
-                    <span class="text-xs font-normal text-slate-500 bg-slate-100 px-3 py-1 rounded-full ml-2">Clic para filtrar</span>
+                <h3 class="font-display font-bold text-slate-800 flex items-center gap-2 text-xl">
+                    <span class="material-symbols-outlined text-blue-600 text-2xl">view_module</span>
+                    Matriz Estratégica M3
+                    <span class="text-[10px] font-bold text-blue-600 bg-blue-100 px-3 py-1 rounded-full ml-3 tracking-widest uppercase">Haz clic para filtrar</span>
                 </h3>
                 <div class="flex gap-2">
-                    <button onclick="toggleSummaryCells()" class="text-xs font-bold bg-slate-200 hover:bg-slate-300 text-slate-600 px-3 py-1.5 rounded-lg transition flex items-center gap-2">
+                    <button onclick="toggleSummaryCells()" class="text-xs font-bold bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-full transition flex items-center gap-2">
                         <span class="material-symbols-outlined text-sm">functions</span>
-                        <span id="btnSummaryText">Ver Resúmenes</span>
+                        <span id="btnSummaryText">Ver Análisis Lateral</span>
                     </button>
                 </div>
             </div>
             
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 min-w-[850px]" id="matrixCaptureTarget">
+            <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-200 min-w-[850px]" id="matrixCaptureTarget">
                 <div class="matrix-grid" id="matrixGridElement">
                     <!-- Headers -->
                     <div></div>
-                    <div class="matrix-header-col"><div class="text-red-500 mb-1"><span class="material-symbols-outlined">remove</span></div>Baja Adopción (-)<br><span class="text-[10px] font-normal text-slate-400" id="header_label_C">≤ 33%</span></div>
-                    <div class="matrix-header-col"><div class="text-yellow-500 mb-1"><span class="material-symbols-outlined">drag_handle</span></div>Media Adopción<br><span class="text-[10px] font-normal text-slate-400" id="header_label_B">33% - 65%</span></div>
-                    <div class="matrix-header-col"><div class="text-green-500 mb-1"><span class="material-symbols-outlined">add</span></div>Alta Adopción (+)<br><span class="text-[10px] font-normal text-slate-400" id="header_label_A">≥ 65%</span></div>
+                    <div class="matrix-header-col"><div class="text-red-400 mb-2"><span class="material-symbols-outlined bg-red-50 p-1 rounded-full">remove</span></div>Baja Adopción (-)<br><span class="text-[10px] font-medium text-slate-400" id="header_label_C">≤ 33%</span></div>
+                    <div class="matrix-header-col"><div class="text-amber-500 mb-2"><span class="material-symbols-outlined bg-amber-50 p-1 rounded-full">drag_handle</span></div>Media Adopción<br><span class="text-[10px] font-medium text-slate-400" id="header_label_B">33% - 66%</span></div>
+                    <div class="matrix-header-col"><div class="text-green-600 mb-2"><span class="material-symbols-outlined bg-green-50 p-1 rounded-full">add</span></div>Alta Adopción (+)<br><span class="text-[10px] font-medium text-slate-400" id="header_label_A">≥ 66%</span></div>
                     
                     <!-- Summary Column Header -->
                     <div class="summary-element flex-col justify-end pb-2 items-center">
-                        <span class="summary-header-title">Resumen Potencialidad</span>
+                        <span class="summary-header-title">Resumen Eje Y</span>
                     </div>
 
                     <!-- Row A -->
-                    <div class="matrix-header-row border-r pr-2 border-slate-100">
-                        <span class="text-purple-700 text-center">Alto Potencial (A)</span>
-                        <span class="text-[9px] font-normal text-slate-400 mt-1" id="row_label_A">Top 33%</span>
+                    <div class="matrix-header-row border-r-2 pr-4 border-slate-100">
+                        <span class="text-slate-700 text-center font-bold">Alto Potencial (A)</span>
+                        <span class="text-[10px] font-medium text-slate-400 mt-2" id="row_label_A">Top 33%</span>
                     </div>
 
                     <!-- JS Injected Cells -->
@@ -463,19 +479,19 @@
         </div>
 
         <!-- Detail Table -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-5 border-b border-slate-200 flex justify-between items-center bg-slate-50">
                 <div>
-                    <h3 class="font-bold text-slate-800" id="tableTitle">Listado de Médicos</h3>
-                    <p class="text-xs text-slate-500" id="tableSubtitle">Todos los registros</p>
+                    <h3 class="font-display font-bold text-slate-800 text-lg" id="tableTitle">Directorio de Médicos</h3>
+                    <p class="text-xs font-medium text-slate-500" id="tableSubtitle">Mostrando todos los registros</p>
                 </div>
-                <button class="hidden text-xs bg-slate-200 hover:bg-slate-300 px-3 py-1 rounded text-slate-700 font-semibold transition" id="clearFilterBtn" onclick="clearMatrixFilter()">
-                    Limpiar Filtro Matriz
+                <button class="hidden text-xs bg-slate-200 hover:bg-slate-300 px-4 py-2 rounded-full text-slate-700 font-bold transition flex items-center gap-1" id="clearFilterBtn" onclick="clearMatrixFilter()">
+                    <span class="material-symbols-outlined text-[14px]">filter_alt_off</span> Limpiar Filtro
                 </button>
             </div>
-            <div class="overflow-x-auto">
+            <div class="responsive-table-wrapper">
                 <table class="w-full text-left border-collapse" id="mainTable">
-                    <thead class="bg-slate-100 text-xs font-semibold text-slate-500 uppercase">
+                    <thead class="bg-slate-100 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                         <tr>
                             <th class="p-4">Clasificación final</th>
                             <th class="p-4">Médico</th>
@@ -493,147 +509,191 @@
     </div>
 </main>
 
-<!-- Info Modals -->
-<div class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" id="infoModal">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[80vh]">
-        <div class="p-5 border-b border-slate-100 flex justify-between items-center">
-            <h3 class="text-lg font-bold text-slate-800" id="infoModalTitle">Info</h3>
-            <button class="text-slate-400 hover:text-slate-700" onclick="document.getElementById('infoModal').classList.add('hidden')"><span class="material-symbols-outlined">close</span></button>
+<!-- Upload Modal M3 -->
+<div class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4 transition-opacity" id="uploadModal">
+    <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+        <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-[2rem]">
+            <h3 class="text-xl font-display font-bold text-slate-800 flex items-center gap-2">
+                <span class="material-symbols-outlined text-blue-600">database</span> Carga Manual (Admin)
+            </h3>
+            <button class="text-slate-400 hover:text-rose-500 bg-white p-1 rounded-full shadow-sm" onclick="document.getElementById('uploadModal').classList.add('hidden')"><span class="material-symbols-outlined">close</span></button>
         </div>
-        <div class="p-6 overflow-y-auto" id="infoModalContent"></div>
-    </div>
-</div>
-
-<div class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" id="uploadModal">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-        <div class="p-6 border-b border-slate-100 flex justify-between items-center">
-            <h3 class="text-lg font-bold text-slate-800">Cargar Datos Manualmente</h3>
-            <button class="text-slate-400 hover:text-red-500" onclick="document.getElementById('uploadModal').classList.add('hidden')"><span class="material-symbols-outlined">close</span></button>
-        </div>
-        <div class="p-6 overflow-y-auto">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div class="p-8 overflow-y-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
                 <div>
-                    <h4 class="font-bold text-blue-800 mb-2 flex items-center gap-2">
-                        <span class="bg-blue-100 p-1 rounded text-blue-600 material-symbols-outlined text-sm">table_chart</span>
+                    <h4 class="font-bold text-blue-800 mb-3 flex items-center gap-2">
+                        <span class="bg-blue-100 p-1.5 rounded-lg text-blue-600 material-symbols-outlined text-sm">table_chart</span>
                         1. Datos de Auditoría
                     </h4>
-                    <p class="text-xs text-slate-500 mb-3 leading-relaxed">
-                        Archivo CSV o Excel con el siguiente orden de columnas:<br>
-                        <span class="font-mono bg-slate-100 p-0.5 rounded">Medico, Matricula, Mercado, Producto, Px_Product, Medico Unico, Domicilio, Cod.Postal, Localidad, Region, Especialidad, Molecula, Clase Terapeutica, Generico, Laboratorio</span>
+                    <p class="text-[11px] text-slate-500 mb-4 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        Archivo CSV o Excel con columnas base:<br>
+                        <span class="font-mono text-slate-700 font-semibold mt-1 block">Medico, Matricula, Mercado, Producto...</span>
                     </p>
-                    <div class="file-drop-area mb-4">
-                        <span class="fake-btn">Elegir archivo</span>
+                    <div class="file-drop-area mb-5">
+                        <span class="fake-btn">Explorar</span>
                         <span class="file-msg" id="auditFileMsg">O arrastra el archivo aquí</span>
                         <input class="file-input" type="file" id="auditFileInput" accept=".csv, .xlsx, .xls" onchange="updateFileLabel('auditFileInput', 'auditFileMsg')">
                     </div>
-                    <div class="relative">
+                    <div class="relative mb-3">
                         <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-200"></div></div>
-                        <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-2 text-slate-400">O pegar texto</span></div>
+                        <div class="relative flex justify-center text-[10px] font-bold uppercase tracking-widest"><span class="bg-white px-3 text-slate-400">O pegar texto crudo</span></div>
                     </div>
-                    <textarea class="w-full h-32 border border-slate-300 rounded-lg p-3 font-mono text-xs focus:ring-2 focus:ring-blue-500 outline-none resize-none mt-2" id="csvInput" placeholder="Pegar datos (Excel/CSV) aquí..."></textarea>
+                    <textarea class="w-full h-32 border border-slate-300 rounded-xl p-4 font-mono text-[10px] focus:ring-2 focus:ring-blue-500 outline-none resize-none bg-slate-50 hover:bg-white transition" id="csvInput" placeholder="Pegar datos (Excel/CSV) aquí..."></textarea>
                 </div>
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <h4 class="font-bold text-slate-700 mb-2 flex items-center gap-2">
-                        <span class="bg-purple-100 p-1 rounded text-purple-600 material-symbols-outlined text-sm">folder_shared</span>
+                <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                    <h4 class="font-bold text-slate-700 mb-3 flex items-center gap-2">
+                        <span class="bg-purple-100 p-1.5 rounded-lg text-purple-600 material-symbols-outlined text-sm">folder_shared</span>
                         2. Fichero Médico (Opcional)
                     </h4>
-                    <p class="text-xs text-slate-500 mb-3">Sube un archivo CSV/Excel para cruzar datos adicionales.</p>
-                    <div class="file-drop-area bg-white">
-                        <span class="fake-btn">Elegir Fichero</span>
+                    <p class="text-xs text-slate-500 mb-5">Sube un archivo para cruzar el panel de médicos con tus representantes.</p>
+                    <div class="file-drop-area bg-white shadow-sm">
+                        <span class="fake-btn bg-purple-600">Elegir Fichero</span>
                         <span class="file-msg" id="ficheroFileMsg">O arrastra el archivo aquí</span>
                         <input class="file-input" type="file" id="ficheroFileInput" accept=".csv, .xlsx, .xls" onchange="updateFileLabel('ficheroFileInput', 'ficheroFileMsg')">
                     </div>
                 </div>
             </div>
-            <p class="text-red-500 text-xs font-bold mt-2 hidden" id="errorMsg"></p>
+            <p class="text-rose-500 text-sm font-bold mt-2 hidden text-center bg-rose-50 p-3 rounded-xl" id="errorMsg"></p>
         </div>
-        <div class="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 rounded-b-2xl">
-            <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold shadow transition flex items-center gap-2" onclick="processData()">
-                <span class="material-symbols-outlined text-sm">rocket_launch</span> Procesar Datos Manuales
+        <div class="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 rounded-b-[2rem]">
+            <button class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-bold shadow-md transition flex items-center gap-2" onclick="processData()">
+                <span class="material-symbols-outlined text-sm">rocket_launch</span> Procesar e Iniciar
             </button>
         </div>
     </div>
 </div>
 
-<div class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" id="configModal">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-        <div class="p-6 border-b border-slate-100">
-            <h3 class="text-lg font-bold text-slate-800">Productos PHQ</h3>
-            <p class="text-xs text-slate-500">Define tus productos clave.</p>
+<!-- Products/Config Modal M3 -->
+<div class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4 transition-opacity" id="productModal">
+    <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg flex flex-col max-h-[85vh]">
+        <div class="p-6 border-b border-slate-100 bg-slate-50 rounded-t-[2rem] flex justify-between items-center">
+            <div>
+                <h3 class="text-xl font-display font-bold text-slate-800 flex items-center gap-2"><span class="material-symbols-outlined text-blue-600">category</span> Productos (PHQ)</h3>
+                <p class="text-xs font-medium text-slate-500 mt-1">Selecciona los productos objetivo para el análisis.</p>
+            </div>
+            <button class="text-slate-400 hover:text-rose-500 bg-white p-1 rounded-full shadow-sm" onclick="document.getElementById('productModal').classList.add('hidden')"><span class="material-symbols-outlined">close</span></button>
         </div>
-        <div class="p-6">
-            <textarea class="w-full h-40 border border-slate-300 rounded-lg p-3 text-xs focus:ring-2 focus:ring-blue-500 outline-none resize-none" id="phqConfigInput">LEPRIT, ESOZ, FLUDIL, TIOCOLFEN, SULAMP, BUMETIN, TIOCOL, MONUKAST, GLUSTAR, CANDETIQUE, OLMETIQUE, XAROX</textarea>
-            <div class="mt-4 flex justify-between items-center">
-                <button onclick="clearSessionData()" class="text-red-500 text-xs font-bold hover:text-red-700 flex items-center gap-1">
-                    <span class="material-symbols-outlined text-sm">delete_forever</span> Borrar Memoria Local
-                </button>
+        
+        <div class="p-6 overflow-y-auto flex-1 bg-white">
+            <div class="mb-4">
+                <label class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2 block">Cargar lista desde CSV (Opcional)</label>
+                <input type="file" id="productCsvInput" accept=".csv,.txt" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition">
+            </div>
+            
+            <div class="relative mb-4">
+                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-200"></div></div>
+                <div class="relative flex justify-center text-[10px] font-bold uppercase tracking-widest"><span class="bg-white px-3 text-slate-400">Selección Manual</span></div>
+            </div>
+
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 max-h-64 overflow-y-auto">
+                <div id="productChecklist" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <!-- Checkboxes injected via JS -->
+                </div>
             </div>
         </div>
-        <div class="p-4 bg-slate-50 border-t border-slate-100 text-right rounded-b-2xl">
-            <button class="bg-slate-800 text-white px-4 py-2 rounded text-sm font-medium" onclick="saveConfig()">Guardar</button>
+
+        <div class="p-6 border-t border-slate-100 bg-slate-50 flex justify-between items-center rounded-b-[2rem]">
+            <button onclick="clearSessionData()" class="text-rose-500 text-xs font-bold hover:text-rose-700 flex items-center gap-1 bg-white px-3 py-2 rounded-lg border border-rose-100 shadow-sm transition">
+                <span class="material-symbols-outlined text-[16px]">delete_forever</span> Borrar Memoria
+            </button>
+            <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-md transition" onclick="saveProductsConfig()">Guardar Configuración</button>
         </div>
     </div>
 </div>
 
-<div class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" id="doctorDetailModal">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[85vh] flex flex-col">
-        <div class="p-6 border-b border-slate-100 bg-slate-50 flex justify-between items-start rounded-t-2xl">
+<!-- Doctor Detail Modal M3 -->
+<div class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[70] flex items-center justify-center p-4" id="doctorDetailModal">
+    <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-5xl max-h-[85vh] flex flex-col">
+        <div class="p-6 md:p-8 border-b border-slate-100 bg-slate-50 flex justify-between items-start rounded-t-[2rem]">
             <div>
-                <div class="flex items-center gap-2 mb-2" id="modalBadges"></div>
-                <h3 class="text-xl font-bold text-slate-800" id="modalDocName">Nombre</h3>
-                <div class="flex gap-2 text-xs text-slate-500 mt-1">
-                    <span class="bg-white px-2 py-1 rounded border" id="modalDocSpec">Esp</span>
-                    <span class="bg-white px-2 py-1 rounded border" id="modalDocLic">Lic</span>
-                    <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-200 font-bold" id="modalDocShare">Share: 0%</span>
+                <div class="flex flex-wrap items-center gap-2 mb-3" id="modalBadges"></div>
+                <h3 class="text-2xl font-display font-bold text-slate-800" id="modalDocName">Nombre</h3>
+                <div class="flex flex-wrap gap-2 text-xs font-medium text-slate-500 mt-2">
+                    <span class="bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">stethoscope</span> <span id="modalDocSpec">Esp</span></span>
+                    <span class="bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">badge</span> <span id="modalDocLic">Lic</span></span>
+                    <span class="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg border border-blue-200 font-bold flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">pie_chart</span> <span id="modalDocShare">Share: 0%</span></span>
                 </div>
             </div>
-            <button class="text-slate-400 hover:text-slate-700" onclick="document.getElementById('doctorDetailModal').classList.add('hidden')"><span class="material-symbols-outlined">close</span></button>
+            <button class="text-slate-400 hover:text-slate-700 bg-white p-2 rounded-full shadow-sm transition" onclick="document.getElementById('doctorDetailModal').classList.add('hidden')"><span class="material-symbols-outlined">close</span></button>
         </div>
-        <div class="p-6 overflow-y-auto flex-1 bg-white" id="doctorModalBody">
+        <div class="p-6 md:p-8 overflow-y-auto flex-1 bg-white" id="doctorModalBody">
             <div class="hidden" id="modalGapContainer"></div>
-            <div id="modalFicheroData" class="hidden mb-6">
-                <details class="group border border-purple-200 rounded-lg bg-purple-50 overflow-hidden">
-                    <summary class="flex items-center justify-between p-3 cursor-pointer select-none hover:bg-purple-100 transition text-purple-800 font-bold text-sm" id="ficheroSummaryHeader">
+            <div id="modalFicheroData" class="hidden mb-8">
+                <details class="group border border-purple-200 rounded-2xl bg-purple-50 overflow-hidden shadow-sm">
+                    <summary class="flex items-center justify-between p-4 cursor-pointer select-none hover:bg-purple-100 transition text-purple-800 font-display font-bold text-sm" id="ficheroSummaryHeader">
                         <!-- El contenido se genera dinámicamente -->
                     </summary>
-                    <div class="p-4 border-t border-purple-100 bg-white" id="modalFicheroContainer">
+                    <div class="p-5 border-t border-purple-100 bg-white" id="modalFicheroContainer">
                         <!-- Dynamic Content Here -->
                     </div>
                 </details>
             </div>
-            <div id="modalContent"></div>
-        </div>
-        <div class="p-4 border-t border-slate-100 bg-slate-50 text-right rounded-b-2xl">
-            <button class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium" onclick="document.getElementById('doctorDetailModal').classList.add('hidden')">Cerrar</button>
+            <h4 class="font-display font-bold text-slate-700 mb-4 border-b border-slate-100 pb-2">Desglose por Mercado</h4>
+            <div id="modalContent" class="space-y-6"></div>
         </div>
     </div>
 </div>
 
 <script>
+    // --- MODO ADMINISTRADOR ---
+    let isAdmin = false;
+
+    function authenticateAdmin() {
+        if(isAdmin) { 
+            isAdmin = false; 
+            updateAdminUI(); 
+            showToast("Modo Administrador desactivado");
+            return; 
+        }
+        
+        // La contraseña por defecto es admin123
+        const pwd = prompt("Ingrese la clave de administrador para acceder a configuraciones avanzadas:");
+        if(pwd === "admin123") {
+            isAdmin = true;
+            updateAdminUI();
+            showToast("Modo Administrador activado");
+        } else if (pwd !== null) {
+            alert("Clave incorrecta. Acceso denegado.");
+        }
+    }
+
+    function updateAdminUI() {
+        const tools = document.getElementById('analysisTools');
+        const uploadBtn = document.getElementById('btnUploadData');
+        const lockIcon = document.getElementById('btnAdminLock');
+        
+        if (isAdmin) {
+            tools.classList.remove('hidden');
+            uploadBtn.classList.remove('hidden');
+            lockIcon.innerText = "lock_open";
+            lockIcon.classList.add("text-blue-500");
+        } else {
+            tools.classList.add('hidden');
+            uploadBtn.classList.add('hidden');
+            lockIcon.innerText = "lock";
+            lockIcon.classList.remove("text-blue-500");
+        }
+    }
+
     // --- CONFIGURACIÓN DE ARCHIVOS GITHUB ---
-    // Nombres exactos de los archivos que debes subir al repositorio
     const CONFIG_FILES = {
         AUDIT: 'datacloseup.csv', 
         FICHERO: 'fichero_medico.csv'
     };
 
-    // --- SECURITY LAYER (Modo Protegido) ---
-    (function() {
-        document.addEventListener('contextmenu', event => event.preventDefault());
-        document.onkeydown = function(e) {
-            if (e.keyCode == 123) return false; 
-            if (e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
-            if (e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
-            if (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
-        };
-        console.log("%c SYSTEM SECURE ", "color: #fff; background: #2563eb; padding: 5px; border-radius: 4px; font-weight: bold;");
-    })();
+    // --- FORMATTERS (ES-AR Style: miles '.', decimal ',') ---
+    function formatNumber(num, decimals = 0) {
+        return new Intl.NumberFormat('es-AR', {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals
+        }).format(num);
+    }
 
     function safeSetText(id, value) { const el = document.getElementById(id); if (el) el.innerText = value; }
     
     // --- STATE VARIABLES ---
     let RAW_DATA = [];
-    let PHQ_PRODUCTS = [];
+    let PHQ_PRODUCTS = ["LEPRIT", "ESOZ", "FLUDIL", "TIOCOLFEN", "SULAMP", "BUMETIN", "TIOCOL", "MONUKAST", "GLUSTAR", "CANDETIQUE", "OLMETIQUE", "XAROX"]; // Default if none loaded
     let PROCESSED_DATA = [];
     let MATRIX_FILTER = null;
     let MARKET_LIST = []; 
@@ -642,11 +702,9 @@
     let FICHERO_MAP = new Map();
     let SHOW_SUMMARIES = false;
     
-    // Config States - Adoption (Share)
+    // Config States (Updated Defaults)
     let TH_LOY_LOW = 33;
-    let TH_LOY_HIGH = 65;
-    
-    // Config States - Potency (Volume Percentile)
+    let TH_LOY_HIGH = 66;
     let TH_POT_LOW = 33;
     let TH_POT_HIGH = 66;
 
@@ -674,25 +732,20 @@
                 
                 if (savedConfig) {
                     PHQ_PRODUCTS = savedConfig;
-                    document.getElementById('phqConfigInput').value = PHQ_PRODUCTS.join(', ');
-                } else {
-                    loadConfig(); 
                 }
 
                 await processData(true);
                 showToast("Sesión restaurada correctamente");
             } else {
-                // No hay sesión guardada, intentar cargar del repositorio
                 safeSetText('loadingText', 'Buscando datos en el repositorio...');
                 loadRepoData();
             }
         } catch (err) {
             console.error("Storage Error:", err);
-            loadRepoData(); // Intentar cargar del repo si falla el storage
+            loadRepoData(); 
         }
     }
 
-    // --- FUNCTION TO LOAD DATA FROM GITHUB ---
     async function fetchFileAsJson(filename) {
         try {
             const response = await fetch(filename);
@@ -712,7 +765,6 @@
         document.getElementById('emptyState').classList.add('hidden');
         document.getElementById('restoringSession').classList.remove('hidden');
         safeSetText('loadingText', 'Descargando archivos del servidor...');
-        loadConfig(); // Cargar configuración de productos por defecto
 
         try {
             const [auditData, ficheroData] = await Promise.all([
@@ -724,15 +776,11 @@
 
             if (ficheroData) {
                 parseFicheroData(ficheroData);
-                console.log(`Fichero cargado: ${ficheroData.length} registros`);
             }
 
             if (auditData && auditData.length > 0) {
                 parseAuditData(auditData);
-                console.log(`Auditoría cargada: ${auditData.length} registros`);
                 dataLoaded = true;
-            } else {
-                showToast("No se encontró el archivo de datos (" + CONFIG_FILES.AUDIT + ")");
             }
 
             if (dataLoaded) {
@@ -768,18 +816,7 @@
         RAW_DATA = [];
         json.forEach(row => {
             const vals = Object.values(row);
-            // Intenta detectar si es un objeto con keys o un array plano
-            if (!Array.isArray(row) && typeof row === 'object') {
-                 // Si viene de JSON con headers
-                 // Asumimos que las columnas pueden variar, buscamos por nombre aproximado o posición
-                 // Si usamos la estructura de ejemplo del usuario:
-                 // Medico, Matricula, Mercado, Producto, Px_Product, Medico Unico...
-                 // Para robustez, usaremos Object.values asumiendo el orden, ya que es lo que hacia el código original con CSV
-                 // O si las keys coinciden
-            }
-
-            // Fallback a lógica posicional robusta (la misma que tenías)
-            if (vals.length >= 10) { // Reduje a 10 para ser más flexible
+            if (vals.length >= 10) { 
                 RAW_DATA.push({
                     doc: String(vals[0] || "").trim(), license: String(vals[1] || "").trim(), market: String(vals[2] || "").trim(), prod: String(vals[3] || "").trim(), rx: parseInt(vals[4]) || 0,
                     address: String(vals[6] || "").trim(), zip: String(vals[7] || "").trim(), city: String(vals[8] || "").trim(), region: String(vals[9] || "").trim(),
@@ -823,85 +860,77 @@
         if(!container) return;
         
         const cellIds = [
-            {id: 'cell_A_C', label: 'A-', title: 'Conquista', color: 'red', delay: 0.1},
-            {id: 'cell_A_B', label: 'A', title: 'Desarrollo', color: 'yellow', delay: 0.2},
-            {id: 'cell_A_A', label: 'A+', title: 'Defensa', color: 'green', delay: 0.3},
+            {id: 'cell_A_C', label: 'A-', title: 'Conquista'},
+            {id: 'cell_A_B', label: 'A', title: 'Desarrollo'},
+            {id: 'cell_A_A', label: 'A+', title: 'Defensa'},
             
-            {id: 'cell_B_C', label: 'B-', title: 'Bajo', color: 'red', delay: 0.15},
-            {id: 'cell_B_B', label: 'B', title: 'Medio', color: 'yellow', delay: 0.25},
-            {id: 'cell_B_A', label: 'B+', title: 'Alto', color: 'green', delay: 0.35},
+            {id: 'cell_B_C', label: 'B-', title: 'Mantenimiento'},
+            {id: 'cell_B_B', label: 'B', title: 'Medio'},
+            {id: 'cell_B_A', label: 'B+', title: 'Fidelización'},
             
-            {id: 'cell_C_C', label: 'C-', title: 'Bajo', color: 'slate', delay: 0.2},
-            {id: 'cell_C_B', label: 'C', title: 'Medio', color: 'slate', delay: 0.3},
-            {id: 'cell_C_A', label: 'C+', title: 'Alto', color: 'blue', delay: 0.4}
+            {id: 'cell_C_C', label: 'C-', title: 'Bajo'},
+            {id: 'cell_C_B', label: 'C', title: 'Medio'},
+            {id: 'cell_C_A', label: 'C+', title: 'Alto'}
         ];
 
         let html = '';
         
-        // --- Row A ---
+        // Row A
         cellIds.slice(0,3).forEach(c => html += generateSingleCellHTML(c));
-        html += generateSummaryCellHTML('row_A', 'Total Potencial A');
+        html += generateSummaryCellHTML('row_A', 'Potencial A');
         
-        // --- Row B ---
-        html += `<div class="matrix-header-row border-r pr-2 border-slate-100"><span class="text-blue-600 text-center">Medio Potencial (B)</span><span class="text-[9px] font-normal text-slate-400 mt-1" id="row_label_B">33% - 66%</span></div>`;
+        // Row B
+        html += `<div class="matrix-header-row border-r-2 pr-4 border-slate-100"><span class="text-blue-700 text-center font-bold">Medio Potencial (B)</span><span class="text-[10px] font-medium text-slate-400 mt-2" id="row_label_B">33% - 66%</span></div>`;
         cellIds.slice(3,6).forEach(c => html += generateSingleCellHTML(c));
-        html += generateSummaryCellHTML('row_B', 'Total Potencial B');
+        html += generateSummaryCellHTML('row_B', 'Potencial B');
         
-        // --- Row C ---
-        html += `<div class="matrix-header-row border-r pr-2 border-slate-100"><span class="text-slate-400 text-center">Bajo Potencial (C)</span><span class="text-[9px] font-normal text-slate-300 mt-1" id="row_label_C">> 66%</span></div>`;
+        // Row C
+        html += `<div class="matrix-header-row border-r-2 pr-4 border-slate-100"><span class="text-slate-400 text-center font-bold">Bajo Potencial (C)</span><span class="text-[10px] font-medium text-slate-300 mt-2" id="row_label_C">> 66%</span></div>`;
         cellIds.slice(6,9).forEach(c => html += generateSingleCellHTML(c));
-        html += generateSummaryCellHTML('row_C', 'Total Potencial C');
+        html += generateSummaryCellHTML('row_C', 'Potencial C');
 
-        // --- Bottom Summary Row (Adoption) ---
-        html += `<div class="summary-element flex items-center justify-end font-bold text-xs text-slate-500 uppercase tracking-wide pr-2">Resumen Adopción</div>`;
-        html += generateSummaryCellHTML('col_C', 'Total Baja Adopción');
-        html += generateSummaryCellHTML('col_B', 'Total Media Adopción');
-        html += generateSummaryCellHTML('col_A', 'Total Alta Adopción');
-        html += `<div class="summary-element bg-slate-100 rounded-xl items-center justify-center text-xs text-slate-400 font-bold uppercase tracking-widest border border-slate-200">Total Universo</div>`;
+        // Bottom Summary Row
+        html += `<div class="summary-element flex items-center justify-end font-bold text-xs text-slate-500 uppercase tracking-wide pr-4">Resumen Adopción</div>`;
+        html += generateSummaryCellHTML('col_C', 'Adopción Baja');
+        html += generateSummaryCellHTML('col_B', 'Adopción Media');
+        html += generateSummaryCellHTML('col_A', 'Adopción Alta');
+        html += `<div class="summary-element bg-slate-100 rounded-[24px] items-center justify-center text-xs text-slate-500 font-display font-bold uppercase tracking-widest border border-slate-200">Universo<br>Total</div>`;
 
         container.innerHTML = html;
     }
 
     function generateSingleCellHTML(c) {
         const key = c.id.replace('cell_', ''); 
-        let hoverClass = "";
-        let pulseClass = "";
-        
-        if(c.color === 'green') hoverClass = "group-hover:text-green-600";
-        if(c.color === 'red') hoverClass = "group-hover:text-red-500";
-        if(c.color === 'yellow') hoverClass = "group-hover:text-yellow-500";
-        
-        if(key === 'A_A' || key === 'A_C') pulseClass = "pulse-active";
-
+        // Color is now purely defined by .cell-X_Y class via Expressive M3 palette
         return `
-        <div class="matrix-cell group theme-${c.color} ${pulseClass}" id="${c.id}" onclick="filterByMatrix('${key.split('_')[0]}', '${key.split('_')[1]}')" style="animation-delay: ${c.delay}s">
+        <div class="matrix-cell group cell-${key}" id="${c.id}" onclick="filterByMatrix('${key.split('_')[0]}', '${key.split('_')[1]}')">
             <div class="cell-tooltip" id="tooltip_${key}">Top: Cargando...</div>
             <div class="flex justify-between items-start mb-2 pointer-events-none">
-                <span class="font-bold text-xs uppercase tracking-widest text-slate-500">${c.title}</span>
-                <button onclick="toggleStats(event, '${key}')" class="pointer-events-auto text-slate-300 hover:text-blue-500 transition" title="Ver Promedios">
-                    <span class="material-symbols-outlined text-[16px]">visibility</span>
+                <span class="font-bold text-[11px] uppercase tracking-widest opacity-80">${c.title}</span>
+                <button onclick="toggleStats(event, '${key}')" class="pointer-events-auto opacity-40 hover:opacity-100 transition" title="Ver Promedios">
+                    <span class="material-symbols-outlined text-[18px]">visibility</span>
                 </button>
             </div>
-            <div class="grid grid-cols-2 gap-y-1 gap-x-2 text-[10px] text-slate-600 mb-2 pointer-events-none">
-                <div title="Rx Total"><span class="material-symbols-outlined icon-inline text-slate-400">receipt_long</span> Rx Total: <span class="font-bold" id="rx_${key}">0</span></div>
-                <div title="Rx PHQ" class="text-right"><span class="material-symbols-outlined icon-inline text-slate-400">pill</span> PHQ: <span class="font-bold text-blue-600" id="phq_${key}">0</span></div>
-                <div title="Market Share" class="col-span-2 text-center border-t border-slate-50 pt-1 mt-1">
-                    <span class="material-symbols-outlined icon-inline text-slate-400">pie_chart</span> MS%: <span class="font-bold text-slate-800" id="ms_${key}">0%</span>
+            <div class="grid grid-cols-2 gap-y-2 gap-x-2 text-[10px] mb-2 pointer-events-none opacity-90 font-medium">
+                <div title="Rx Total"><span class="material-symbols-outlined icon-inline opacity-60">receipt_long</span> Total: <span class="font-bold font-mono text-[11px]" id="rx_${key}">0</span></div>
+                <div title="Rx PHQ" class="text-right"><span class="material-symbols-outlined icon-inline opacity-60">pill</span> Lab: <span class="font-bold font-mono text-[11px]" id="phq_${key}">0</span></div>
+                <div title="Market Share" class="col-span-2 text-center pt-2 mt-1 border-t border-black/5">
+                    <span class="material-symbols-outlined icon-inline opacity-60">pie_chart</span> MS: <span class="font-bold text-[12px]" id="ms_${key}">0%</span>
                 </div>
             </div>
-            <div class="stats-drawer text-[9px] text-slate-500 flex justify-between px-2 bg-slate-50 rounded pointer-events-auto" id="drawer_${key}">
-                <div class="flex flex-col items-center py-1"><span>Media Tot</span><span class="font-bold text-slate-700 text-xs" id="avg_tot_${key}">0</span></div>
-                <div class="flex flex-col items-center py-1"><span>Media PHQ</span><span class="font-bold text-blue-600 text-xs" id="avg_phq_${key}">0</span></div>
+            <div class="stats-drawer text-[10px] flex justify-between px-3 bg-black/5 rounded-xl pointer-events-auto" id="drawer_${key}">
+                <div class="flex flex-col items-center py-2 opacity-80"><span class="uppercase tracking-wide text-[8px] font-bold">Media Tot</span><span class="font-bold text-xs font-mono" id="avg_tot_${key}">0</span></div>
+                <div class="flex flex-col items-center py-2 opacity-80"><span class="uppercase tracking-wide text-[8px] font-bold">Media Lab</span><span class="font-bold text-xs font-mono" id="avg_phq_${key}">0</span></div>
             </div>
-            <div class="flex-1 flex flex-col items-center justify-center my-2 pointer-events-none">
-                <div class="text-5xl font-black tracking-tighter text-slate-800 letter-display ${hoverClass} transition-colors duration-300" style="font-family: 'Inter', sans-serif;">${c.label}</div>
+            <div class="flex-1 flex flex-col items-center justify-center my-3 pointer-events-none drop-shadow-sm">
+                <div class="text-6xl font-display font-black tracking-tighter letter-display transition-transform duration-300 group-hover:scale-110">${c.label}</div>
             </div>
-            <div class="flex items-center justify-center gap-1 text-xl font-bold text-slate-800 leading-none mb-1 mt-auto border-t border-slate-100 pt-2 pointer-events-none">
-                <span class="material-symbols-outlined text-slate-400 text-lg mr-1" style="vertical-align: -2px;">groups</span>
+            <div class="flex items-center justify-center gap-1 text-xl font-display font-bold leading-none mb-1 mt-auto border-t border-black/5 pt-3 pointer-events-none">
+                <span class="material-symbols-outlined opacity-60 text-[22px]" style="vertical-align: -3px;">groups</span>
                 <span id="count_${key}">0</span>
             </div>
             <div class="text-center pointer-events-none">
-                <div class="text-[10px] text-slate-400 font-medium"><span id="pct_drs_${key}">0%</span></div>
+                <div class="text-[11px] font-bold opacity-70"><span id="pct_drs_${key}">0%</span></div>
             </div>
         </div>`;
     }
@@ -909,15 +938,15 @@
     function generateSummaryCellHTML(id, title) {
         return `
         <div class="matrix-cell-summary summary-element" id="sum_${id}">
-             <div class="text-center mb-3">
-                <span class="font-bold text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-200 pb-1 block">${title}</span>
+             <div class="text-center mb-4">
+                <span class="font-bold text-[10px] uppercase tracking-widest text-slate-500 border-b border-slate-300 pb-2 block">${title}</span>
             </div>
-             <div class="space-y-2 text-xs">
-                <div class="flex justify-between items-center"><span class="text-slate-400">Rx Total</span> <span class="font-bold text-slate-600 font-mono" id="${id}_rx">0</span></div>
-                <div class="flex justify-between items-center"><span class="text-blue-400">Rx PHQ</span> <span class="font-bold text-blue-600 font-mono" id="${id}_phq">0</span></div>
-                <div class="flex justify-between items-center"><span class="text-green-500">Share Avg</span> <span class="font-bold text-green-700" id="${id}_share">0%</span></div>
-                <div class="w-full h-px bg-slate-200 my-2"></div>
-                <div class="flex justify-between items-center"><span class="font-bold text-slate-700">Drs</span> <span class="font-black text-lg text-slate-800" id="${id}_count">0</span></div>
+             <div class="space-y-3 text-xs font-medium">
+                <div class="flex justify-between items-center"><span class="text-slate-500 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">receipt_long</span>Total</span> <span class="font-bold text-slate-700 font-mono text-[13px]" id="${id}_rx">0</span></div>
+                <div class="flex justify-between items-center"><span class="text-blue-600 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">pill</span>Lab</span> <span class="font-bold text-blue-700 font-mono text-[13px]" id="${id}_phq">0</span></div>
+                <div class="flex justify-between items-center"><span class="text-green-600 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">pie_chart</span>Share</span> <span class="font-bold text-green-700 text-[13px]" id="${id}_share">0%</span></div>
+                <div class="w-full h-px bg-slate-300 my-3"></div>
+                <div class="flex justify-between items-center"><span class="font-bold text-slate-600 uppercase tracking-widest text-[10px]">Médicos</span> <span class="font-display font-black text-xl text-slate-800" id="${id}_count">0</span></div>
              </div>
         </div>`;
     }
@@ -929,7 +958,7 @@
         const grid = document.getElementById('matrixGridElement');
         if (SHOW_SUMMARIES) { grid.classList.add('expanded'); } else { grid.classList.remove('expanded'); }
         elements.forEach(el => { if(SHOW_SUMMARIES) el.classList.add('show'); else el.classList.remove('show'); });
-        btnText.innerText = SHOW_SUMMARIES ? "Ocultar Resúmenes" : "Ver Resúmenes";
+        btnText.innerText = SHOW_SUMMARIES ? "Ocultar Análisis Lateral" : "Ver Análisis Lateral";
     }
 
     function toggleStats(e, key) {
@@ -947,11 +976,59 @@
     // --- INITIALIZATION ---
     window.addEventListener('DOMContentLoaded', () => { 
         generateMatrixGridHTML(); 
-        initStorage(); // Start persistence check or auto-load
+        // Sliders Init
+        document.getElementById('sliderLow').value = TH_LOY_LOW;
+        document.getElementById('sliderHigh').value = TH_LOY_HIGH;
+        updateThresholds();
+        initStorage(); 
     });
 
-    function loadConfig() { const input = document.getElementById('phqConfigInput').value; PHQ_PRODUCTS = input.split(/[\n,]+/).map(s => s.trim().toUpperCase()).filter(s => s); }
-    function saveConfig() { loadConfig(); document.getElementById('configModal').classList.add('hidden'); saveSession(); if(RAW_DATA.length > 0) processData(true); }
+    // --- Products/Config Logic ---
+    function openProductModal() {
+        renderProductCheckboxes();
+        document.getElementById('productModal').classList.remove('hidden');
+        
+        // Listen to CSV upload inside modal
+        const csvInput = document.getElementById('productCsvInput');
+        csvInput.onchange = (e) => {
+            if(!e.target.files.length) return;
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const text = ev.target.result;
+                const newProds = text.split(/[\n,;]+/).map(s => s.trim().toUpperCase()).filter(s => s);
+                if(newProds.length > 0) {
+                    PHQ_PRODUCTS = [...new Set([...PHQ_PRODUCTS, ...newProds])];
+                    renderProductCheckboxes();
+                    showToast(`${newProds.length} productos procesados del archivo`);
+                }
+            };
+            reader.readAsText(file);
+        };
+    }
+
+    function renderProductCheckboxes() {
+        const container = document.getElementById('productChecklist');
+        // Extract all products from data + currently saved ones
+        const allProds = RAW_DATA.length > 0 ? [...new Set(RAW_DATA.map(d => d.prod).filter(x=>x))] : [];
+        const combined = [...new Set([...allProds, ...PHQ_PRODUCTS])].map(p=>p.toUpperCase()).sort();
+
+        container.innerHTML = combined.map(p => `
+            <label class="flex items-center gap-3 p-3 bg-white hover:bg-slate-100 rounded-xl border border-slate-200 cursor-pointer transition shadow-sm">
+                <input type="checkbox" value="${p}" ${PHQ_PRODUCTS.includes(p) ? 'checked' : ''} class="phq-prod-cb accent-blue-600 w-5 h-5 rounded">
+                <span class="text-sm font-semibold text-slate-700 truncate" title="${p}">${p}</span>
+            </label>
+        `).join('');
+    }
+
+    function saveProductsConfig() { 
+        const checked = Array.from(document.querySelectorAll('.phq-prod-cb:checked')).map(cb => cb.value.toUpperCase());
+        PHQ_PRODUCTS = checked;
+        document.getElementById('productModal').classList.add('hidden'); 
+        saveSession(); 
+        if(RAW_DATA.length > 0) processData(true); 
+    }
+
     function isPhq(prodName) { if(!prodName) return false; const upper = prodName.toUpperCase(); return PHQ_PRODUCTS.some(p => upper.includes(p)); }
 
     // --- Dynamic Threshold Logic ---
@@ -961,7 +1038,6 @@
         const potLow = parseInt(document.getElementById('sliderPotLow').value);
         const potHigh = parseInt(document.getElementById('sliderPotHigh').value);
         
-        // Validation: Prevent Crossing
         if (low >= high) return; 
         if (potLow >= potHigh) return;
 
@@ -975,7 +1051,6 @@
         safeSetText('lblPotLow', potLow + '%');
         safeSetText('lblPotHigh', potHigh + '%');
         
-        // Update header labels
         safeSetText('header_label_C', `≤ ${low}%`);
         safeSetText('header_label_B', `${low}% - ${high}%`);
         safeSetText('header_label_A', `≥ ${high}%`);
@@ -988,14 +1063,12 @@
     }
 
     // --- Export Logic ---
-
     function exportPDF() {
         try {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
-            // Title and Metadata
-            doc.setFontSize(16);
+            doc.setFontSize(18);
             doc.text("Reporte de Matriz PHQ", 14, 20);
             doc.setFontSize(10);
             doc.setTextColor(100);
@@ -1013,29 +1086,28 @@
             const tableBody = data.map(d => [
                 d.matrixLabel, 
                 d.name, 
-                d.gap > 0 ? `+${d.gap}` : '-', 
-                d.totalRx.toLocaleString(), 
-                d.rxPhq.toLocaleString(), 
-                d.share.toFixed(1)+'%'
+                d.gap > 0 ? `+${formatNumber(d.gap)}` : '-', 
+                formatNumber(d.totalRx), 
+                formatNumber(d.rxPhq), 
+                formatNumber(d.share, 1)+'%'
             ]);
 
             doc.autoTable({ 
                 startY: 40,
-                head: [['Target', 'Médico', 'Gap', 'Rx Total', 'Rx Lab', 'MS %']], 
+                head: [['Target', 'Médico', 'Gap Rx', 'Rx Mercado', 'Rx Lab', 'Share %']], 
                 body: tableBody,
                 theme: 'grid',
-                headStyles: { fillColor: [59, 130, 246] }, // Blue header
+                headStyles: { fillColor: [10, 86, 209] }, 
                 styles: { fontSize: 8 },
                 columnStyles: {
+                    2: { halign: 'center' },
                     3: { halign: 'right' },
                     4: { halign: 'right' },
                     5: { halign: 'center' }
                 }
             });
-
             doc.save("Reporte_PHQ.pdf");
         } catch (error) {
-            console.error("PDF Export Error:", error);
             alert("Error al generar PDF. Asegúrate de que los datos estén cargados.");
         }
     }
@@ -1043,7 +1115,7 @@
     function exportExcel() {
         let data = PROCESSED_DATA;
         if(MATRIX_FILTER) data = data.filter(d => d.catPotency === MATRIX_FILTER.pot && d.catLoyalty === MATRIX_FILTER.loy);
-        const exportData = data.map(d => ({ "Clasificación final": d.matrixLabel, "Médico": d.name, "Rx Faltantes": d.gap, "Recetas Totales": d.totalRx, "Recetas Lab": d.rxPhq, "Share %": (d.share/100).toFixed(3) }));
+        const exportData = data.map(d => ({ "Clasificación final": d.matrixLabel, "Médico": d.name, "Rx Faltantes": d.gap, "Recetas Totales": d.totalRx, "Recetas Lab": d.rxPhq, "Share %": parseFloat(d.share.toFixed(2)) }));
         const ws = XLSX.utils.json_to_sheet(exportData);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Matriz PHQ");
@@ -1053,8 +1125,8 @@
     function updateFileLabel(inputId, msgId) {
         const input = document.getElementById(inputId);
         const msg = document.getElementById(msgId);
-        if (input.files && input.files.length > 0) { msg.innerText = input.files[0].name; msg.style.color = "#3b82f6"; msg.style.fontWeight = "bold"; } 
-        else { msg.innerText = "O arrastra el archivo aquí"; msg.style.color = "#94a3b8"; }
+        if (input.files && input.files.length > 0) { msg.innerText = input.files[0].name; msg.style.color = "#0A56D1"; msg.style.fontWeight = "bold"; } 
+        else { msg.innerText = "O arrastra el archivo aquí"; msg.style.color = "#44474E"; msg.style.fontWeight = "normal"; }
     }
 
     function updateMarketCheckboxes(checked) {
@@ -1065,32 +1137,41 @@
         if(btnText) btnText.innerText = checked ? "Todos seleccionados" : "Ninguno seleccionado";
     }
 
-    function showInfoModal(title, content) { document.getElementById('infoModalTitle').innerText = title; document.getElementById('infoModalContent').innerHTML = content; document.getElementById('infoModal').classList.remove('hidden'); }
-
     function showMarketDetails() {
-        let html = `<div class="mb-4 text-sm text-slate-600">Ranking completo de productos (Tu Portafolio vs Competencia) en la selección actual.</div><div class="border rounded-lg overflow-hidden max-h-[60vh] overflow-y-auto"><table class="w-full text-xs text-left"><thead class="bg-slate-50 font-bold text-slate-500 uppercase sticky top-0 shadow-sm"><tr><th class="p-2">Producto</th><th class="p-2 text-right">Rx</th><th class="p-2 text-center">MS %</th></tr></thead><tbody class="divide-y divide-slate-100">`;
+        let html = `<div class="mb-4 text-sm text-slate-600">Ranking completo de productos (Tu Portafolio vs Competencia) en la selección actual.</div><div class="border border-slate-200 rounded-2xl overflow-hidden max-h-[60vh] overflow-y-auto"><table class="w-full text-sm text-left"><thead class="bg-slate-100 font-bold text-slate-500 uppercase sticky top-0 shadow-sm text-xs"><tr><th class="p-3">Producto</th><th class="p-3 text-right">Rx</th><th class="p-3 text-center">MS %</th></tr></thead><tbody class="divide-y divide-slate-100">`;
         
         let totalMkt = CURRENT_COMP_BREAKDOWN.reduce((s,i) => s + i.rx, 0);
         
         CURRENT_COMP_BREAKDOWN.forEach((item, idx) => {
             const share = totalMkt > 0 ? (item.rx / totalMkt) * 100 : 0;
-            let rowStyle = "text-slate-600";
+            let rowStyle = "text-slate-600 hover:bg-slate-50 transition";
             let nameStyle = "";
             let shareStyle = "text-slate-500";
             
             if(item.type === 'PHQ') {
-                rowStyle = "bg-blue-50 text-blue-900";
+                rowStyle = "bg-blue-50/50 text-blue-900";
                 nameStyle = "font-bold text-blue-700";
                 shareStyle = "font-bold text-blue-700";
             } else if (idx === 0) {
-                 rowStyle = "bg-red-50 text-red-900";
+                 rowStyle = "bg-rose-50/50 text-rose-900";
             }
 
-            html += `<tr class="${rowStyle}"><td class="p-2 ${nameStyle}">${item.prod} ${item.type==='PHQ'?'(PHQ)':''}</td><td class="p-2 text-right font-mono">${item.rx.toLocaleString()}</td><td class="p-2 text-center ${shareStyle}">${share.toFixed(1)}%</td></tr>`;
+            html += `<tr class="${rowStyle}"><td class="p-3 ${nameStyle}">${item.prod} ${item.type==='PHQ'?'<span class="text-[9px] bg-blue-100 px-1 rounded ml-1 uppercase">PHQ</span>':''}</td><td class="p-3 text-right font-mono font-medium">${formatNumber(item.rx)}</td><td class="p-3 text-center ${shareStyle}">${formatNumber(share, 1)}%</td></tr>`;
         });
         
         html += `</tbody></table></div>`;
-        showInfoModal("Composición de Mercado (Ranking)", html);
+        
+        // Show in standard modal format, replacing its content temporarily
+        const detailModal = document.getElementById('doctorDetailModal');
+        safeSetText('modalDocName', "Composición de Mercado");
+        safeSetText('modalDocSpec', "Ranking de Productos");
+        safeSetText('modalDocLic', "Global");
+        safeSetText('modalDocShare', "-");
+        document.getElementById('modalBadges').innerHTML = '<span class="material-symbols-outlined text-blue-500 text-3xl">analytics</span>';
+        document.getElementById('modalGapContainer').classList.add('hidden');
+        document.getElementById('modalFicheroData').classList.add('hidden');
+        document.getElementById('modalContent').innerHTML = html;
+        detailModal.classList.remove('hidden');
     }
 
     function toggleMarketDropdown() { document.getElementById('marketDropdownPanel').classList.toggle('hidden'); }
@@ -1128,13 +1209,11 @@
         });
     }
 
-    // --- DATA PROCESSING (Modified for Persistence) ---
+    // --- DATA PROCESSING ---
     async function processData(isRestoring = false) {
         const errorEl = document.getElementById('errorMsg');
         errorEl.classList.add('hidden');
         
-        // --- MANUAL UPLOAD LOGIC ---
-        // Only run if not restoring from persistence or repo load
         if (!isRestoring && RAW_DATA.length === 0) {
             const textInput = document.getElementById('csvInput').value;
             const auditFileInput = document.getElementById('auditFileInput');
@@ -1145,18 +1224,15 @@
             }
 
             try {
-                // Process Fichero
                 if (ficheroFileInput.files && ficheroFileInput.files.length > 0) {
                     const fichJson = await readFileAsJson(ficheroFileInput.files[0]);
                     parseFicheroData(fichJson);
                 }
 
-                // Process Audit
                 if (auditFileInput.files && auditFileInput.files.length > 0) {
                     const json = await readFileAsJson(auditFileInput.files[0]);
                     parseAuditData(json);
                 } else if (textInput.trim()) {
-                    // Fallback para texto pegado (CSV/TSV)
                     RAW_DATA = [];
                     const lines = textInput.split('\n');
                     lines.forEach(line => {
@@ -1171,54 +1247,66 @@
                     });
                 }
                 
-                // Save manually loaded session
                 saveSession();
 
             } catch (e) {
-                errorEl.innerText = "Error: " + e.message; errorEl.classList.remove('hidden'); console.error(e);
+                errorEl.innerText = "Error procesando archivo: " + e.message; errorEl.classList.remove('hidden'); console.error(e);
                 return;
             }
         }
 
         if(RAW_DATA.length === 0) {
-             if(!isRestoring) { errorEl.innerText = "No se encontraron filas válidas."; errorEl.classList.remove('hidden'); }
+             if(!isRestoring) { errorEl.innerText = "No se encontraron datos procesables."; errorEl.classList.remove('hidden'); }
              return;
         }
 
         populateFilters(); 
         
-        // If it's a new load, select all markets. If restoring, we could persist selection but for now reset to all for safety.
         SELECTED_MARKETS = [...MARKET_LIST]; 
         updateMarketCheckboxes(true);
 
         aggregateAndCalculate();
 
-        // UI Updates
         document.getElementById('restoringSession').classList.add('hidden');
         document.getElementById('uploadModal').classList.add('hidden');
         document.getElementById('emptyState').classList.add('hidden');
         document.getElementById('dashboardContent').classList.remove('hidden');
         document.getElementById('filterBar').classList.remove('hidden');
         document.getElementById('filterBar').style.display = 'flex';
-        document.getElementById('analysisTools').classList.remove('hidden');
-        document.getElementById('analysisTools').style.display = 'flex';
         
-        if(!isRestoring) showToast("Datos procesados y guardados");
+        if(!isRestoring) showToast("Datos procesados exitosamente");
     }
 
     function populateFilters() {
         const getUnique = (key) => [...new Set(RAW_DATA.map(d => d[key]).filter(x => x))].sort();
+        
         MARKET_LIST = getUnique('market');
         const mktContainer = document.getElementById('marketListContainer'); mktContainer.innerHTML = '';
         MARKET_LIST.forEach(m => {
             const cleanName = m.replace(/Mercado/i, '').trim() || m;
             const div = document.createElement('div'); div.className = 'checkbox-item';
-            div.innerHTML = `<input type="checkbox" value="${m}" onchange="updateSelectedMarkets()"><span class="text-xs text-slate-700">${cleanName}</span>`;
+            div.innerHTML = `<input type="checkbox" value="${m}" onchange="updateSelectedMarkets()"><span class="text-sm font-medium text-slate-700">${cleanName}</span>`;
             mktContainer.appendChild(div);
         });
+        
         const products = getUnique('prod').filter(p => isPhq(p));
         const prodSel = document.getElementById('filterProduct'); prodSel.innerHTML = '<option value="all">Todos mis productos</option>';
         products.forEach(p => prodSel.innerHTML += `<option value="${p}">${p}</option>`);
+
+        // Extraer Representantes
+        let repSet = new Set();
+        FICHERO_MAP.forEach(rows => {
+            rows.forEach(r => {
+                // Buscar columnas típicas de representante
+                const repKey = Object.keys(r).find(k => /rep|visit|visitador|nombre|agente|contact/i.test(k) && !/med|doc|pac|dir|mat/i.test(k));
+                if(repKey && r[repKey]) {
+                    repSet.add(String(r[repKey]).trim().toUpperCase());
+                }
+            });
+        });
+        const repSel = document.getElementById('filterRep');
+        repSel.innerHTML = '<option value="all">Todos (Fichados y No)</option>';
+        Array.from(repSet).sort().forEach(rep => repSel.innerHTML += `<option value="${rep}">${rep}</option>`);
 
         const fillSelect = (id, key, label) => {
             const list = getUnique(key); const sel = document.getElementById(id);
@@ -1234,7 +1322,7 @@
 
     function aggregateAndCalculate() {
         const fProd = document.getElementById('filterProduct').value;
-        const fFichero = document.getElementById('filterFichero').value;
+        const fRep = document.getElementById('filterRep').value;
         const fRegion = document.getElementById('filterRegion').value;
         const fSpec = document.getElementById('filterSpec').value;
         const fMolecule = document.getElementById('filterMolecule').value;
@@ -1269,9 +1357,7 @@
         });
 
         CURRENT_COMP_BREAKDOWN = Object.entries(allProductTotals).map(([k, v]) => ({
-            prod: k, 
-            rx: v,
-            type: isPhq(k) ? 'PHQ' : 'Comp'
+            prod: k, rx: v, type: isPhq(k) ? 'PHQ' : 'Comp'
         })).sort((a,b) => b.rx - a.rx);
 
         let doctors = Object.values(docMap).map(d => {
@@ -1301,8 +1387,15 @@
             return { ...d, totalRx: denominator, share, catLoyalty, gap, targetLabel, ficheroData };
         });
 
-        if (fFichero === 'fichado') { doctors = doctors.filter(d => d.ficheroData.length > 0); } 
-        else if (fFichero === 'nofichado') { doctors = doctors.filter(d => d.ficheroData.length === 0); }
+        // Filter by Representative
+        if (fRep !== 'all') {
+            doctors = doctors.filter(d => {
+                return d.ficheroData.some(row => {
+                    const vals = Object.values(row).map(v => String(v).toUpperCase());
+                    return vals.includes(fRep.toUpperCase());
+                });
+            });
+        }
 
         const grandTotalRx = doctors.reduce((s, d) => s + d.totalRx, 0);
         doctors.sort((a, b) => b.totalRx - a.totalRx);
@@ -1334,13 +1427,14 @@
     }
 
     function renderDashboard(grandTotal, topCompName, topCompRx) {
-        safeSetText('statTotalDocs', PROCESSED_DATA.length);
-        safeSetText('statTotalMkt', grandTotal.toLocaleString());
+        safeSetText('statTotalDocs', formatNumber(PROCESSED_DATA.length));
+        safeSetText('statTotalMkt', formatNumber(grandTotal));
         const totalMyRx = PROCESSED_DATA.reduce((s, d) => s + d.rxPhq, 0);
-        safeSetText('statMyRx', totalMyRx.toLocaleString());
+        safeSetText('statMyRx', formatNumber(totalMyRx));
         const avgShare = grandTotal > 0 ? (totalMyRx / grandTotal) * 100 : 0;
-        safeSetText('statShare', avgShare.toFixed(1) + "%");
-        safeSetText('topCompName', topCompName); safeSetText('topCompRx', topCompRx.toLocaleString());
+        safeSetText('statShare', formatNumber(avgShare, 1) + "%");
+        safeSetText('topCompName', topCompName); 
+        safeSetText('topCompRx', formatNumber(topCompRx));
 
         const restRx = grandTotal - totalMyRx - topCompRx;
         const pctPhq = grandTotal > 0 ? (totalMyRx/grandTotal)*100 : 0;
@@ -1351,9 +1445,9 @@
         const elBarComp = document.getElementById('barComp'); if(elBarComp) elBarComp.style.width = pctComp + "%";
         const elBarRest = document.getElementById('barRest'); if(elBarRest) elBarRest.style.width = pctRest + "%";
 
-        safeSetText('labelPhq', `PHQ: ${pctPhq.toFixed(1)}%`);
-        safeSetText('labelComp', `${topCompName.substring(0,8)}..: ${pctComp.toFixed(1)}%`);
-        safeSetText('labelRest', `Resto: ${pctRest.toFixed(1)}%`);
+        safeSetText('labelPhq', `PHQ: ${formatNumber(pctPhq, 1)}%`);
+        safeSetText('labelComp', `${topCompName.substring(0,8)}..: ${formatNumber(pctComp, 1)}%`);
+        safeSetText('labelRest', `Resto: ${formatNumber(pctRest, 1)}%`);
 
         const matrixKeys = ['A_C', 'A_B', 'A_A', 'B_C', 'B_B', 'B_A', 'C_C', 'C_B', 'C_A'];
         const summaries = { row_A: { rx:0, phq:0, count:0 }, row_B: { rx:0, phq:0, count:0 }, row_C: { rx:0, phq:0, count:0 }, col_C: { rx:0, phq:0, count:0 }, col_B: { rx:0, phq:0, count:0 }, col_A: { rx:0, phq:0, count:0 } };
@@ -1369,18 +1463,18 @@
             const avgPhqPerDoc = count > 0 ? Math.round(sumPhq / count) : 0;
             const pctOfUniverse = PROCESSED_DATA.length > 0 ? (count / PROCESSED_DATA.length) * 100 : 0;
 
-            safeSetText(`count_${key}`, count);
+            safeSetText(`count_${key}`, formatNumber(count));
             safeSetText(`rx_${key}`, compactNum(sumRx));
             safeSetText(`phq_${key}`, compactNum(sumPhq));
-            safeSetText(`ms_${key}`, avgMS.toFixed(0) + '%');
-            safeSetText(`avg_tot_${key}`, avgTotPerDoc);
-            safeSetText(`avg_phq_${key}`, avgPhqPerDoc);
-            safeSetText(`pct_drs_${key}`, pctOfUniverse.toFixed(2) + '%');
+            safeSetText(`ms_${key}`, formatNumber(avgMS, 0) + '%');
+            safeSetText(`avg_tot_${key}`, formatNumber(avgTotPerDoc));
+            safeSetText(`avg_phq_${key}`, formatNumber(avgPhqPerDoc));
+            safeSetText(`pct_drs_${key}`, formatNumber(pctOfUniverse, 1) + '%');
 
             const tooltip = document.getElementById(`tooltip_${key}`);
             if(count > 0) {
                 const topDoc = subset.reduce((prev, current) => (prev.totalRx > current.totalRx) ? prev : current);
-                tooltip.innerHTML = `<strong>Top:</strong> ${topDoc.name.substring(0,12)}<br>Rx: ${topDoc.totalRx}`;
+                tooltip.innerHTML = `<span class="text-blue-300">Top Doc:</span><br><b>${topDoc.name.substring(0,18)}</b><br>Rx Mercado: ${formatNumber(topDoc.totalRx)}`;
             } else { tooltip.innerHTML = `Sin datos`; }
 
             if(summaries[`row_${pot}`]) { summaries[`row_${pot}`].rx += sumRx; summaries[`row_${pot}`].phq += sumPhq; summaries[`row_${pot}`].count += count; }
@@ -1390,12 +1484,16 @@
         Object.keys(summaries).forEach(k => {
             const s = summaries[k]; const share = s.rx > 0 ? (s.phq / s.rx)*100 : 0;
             safeSetText(`${k}_rx`, compactNum(s.rx)); safeSetText(`${k}_phq`, compactNum(s.phq));
-            safeSetText(`${k}_count`, s.count); safeSetText(`${k}_share`, share.toFixed(1)+'%');
+            safeSetText(`${k}_count`, formatNumber(s.count)); safeSetText(`${k}_share`, formatNumber(share, 1)+'%');
         });
         renderTable();
     }
 
-    function compactNum(num) { return Intl.NumberFormat('en-US', { notation: "compact", maximumFractionDigits: 1 }).format(num); }
+    function compactNum(num) { 
+        if(num >= 1000000) return formatNumber(num/1000000, 1) + 'M';
+        if(num >= 1000) return formatNumber(num/1000, 1) + 'k';
+        return formatNumber(num); 
+    }
 
     function filterByMatrix(pot, loy) {
         MATRIX_FILTER = { pot, loy };
@@ -1411,7 +1509,7 @@
         MATRIX_FILTER = null;
         document.querySelectorAll('.matrix-cell').forEach(c => c.classList.remove('selected'));
         document.getElementById('clearFilterBtn').classList.add('hidden');
-        safeSetText('tableSubtitle', "Todos los registros");
+        safeSetText('tableSubtitle', "Mostrando todos los registros");
         renderTable();
     }
 
@@ -1426,26 +1524,29 @@
 
         data.slice(0, 300).forEach(d => {
             const tr = document.createElement('tr');
-            tr.className = `hover:bg-slate-50 transition border-b border-slate-100 cursor-pointer`;
+            tr.className = `hover:bg-slate-50 transition border-b border-slate-100 cursor-pointer group`;
             tr.onclick = () => openDoctorModal(d.id); 
             
             let colorClass = "bg-slate-100 text-slate-600";
             if(d.catPotency === 'A') colorClass = "bg-purple-100 text-purple-700 border border-purple-200";
 
-            let gapHtml = `<span class="text-xs text-green-600 font-bold">Objetivo</span>`;
-            if (d.gap > 0) { gapHtml = `<span class="badge-gap">+${d.gap} Rx</span>`; }
+            let gapHtml = `<span class="text-xs text-green-600 font-bold flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[14px]">task_alt</span> Objetivo</span>`;
+            if (d.gap > 0) { gapHtml = `<span class="badge-gap">+${formatNumber(d.gap)} Rx</span>`; }
 
             let fichIcon = ""; let fichClass = "";
-            if(d.ficheroData && d.ficheroData.length > 0) { fichIcon = `<span class="material-symbols-outlined text-purple-600 text-sm ml-1" title="Fichado: ${d.ficheroData.length} representante(s)">check_circle</span>`; } 
-            else { fichIcon = `<span class="material-symbols-outlined text-slate-300 text-sm ml-1" title="No Fichado">cancel</span>`; fichClass = "opacity-80"; }
+            if(d.ficheroData && d.ficheroData.length > 0) { 
+                fichIcon = `<span class="bg-blue-100 text-blue-700 text-[10px] px-2 py-0.5 rounded-full font-bold ml-2 flex items-center gap-1 border border-blue-200"><span class="material-symbols-outlined text-[12px]">how_to_reg</span> Fichado</span>`; 
+            } else { 
+                fichClass = "opacity-80"; 
+            }
             
             tr.innerHTML = `
-                <td class="p-4 ${fichClass}"><span class="font-bold text-xs px-2 py-1 rounded ${colorClass}">${d.matrixLabel}</span></td>
-                <td class="p-4 ${fichClass}"><div class="font-bold text-sm text-slate-700 hover:text-blue-600 flex items-center gap-1">${d.name} ${fichIcon}</div></td>
-                <td class="p-4 text-xs text-slate-500 ${fichClass}">${d.spec}</td>
-                <td class="p-4 text-right font-mono text-xs text-slate-600 ${fichClass}">${d.totalRx.toLocaleString()}</td>
-                <td class="p-4 text-right font-mono text-xs font-bold text-blue-600 ${fichClass}">${d.rxPhq.toLocaleString()}</td>
-                <td class="p-4 text-center text-xs font-bold text-slate-700 ${fichClass}">${d.share.toFixed(1)}%</td>
+                <td class="p-4 ${fichClass}"><span class="font-bold font-display text-xs px-2 py-1.5 rounded-lg ${colorClass}">${d.matrixLabel}</span></td>
+                <td class="p-4 ${fichClass}"><div class="font-bold text-sm text-slate-700 group-hover:text-blue-600 flex items-center transition">${d.name} ${fichIcon}</div></td>
+                <td class="p-4 text-xs font-medium text-slate-500 ${fichClass}">${d.spec}</td>
+                <td class="p-4 text-right font-mono font-medium text-sm text-slate-600 ${fichClass}">${formatNumber(d.totalRx)}</td>
+                <td class="p-4 text-right font-mono text-sm font-bold text-blue-600 ${fichClass}">${formatNumber(d.rxPhq)}</td>
+                <td class="p-4 text-center text-xs font-bold text-slate-700 ${fichClass}">${formatNumber(d.share, 1)}%</td>
                 <td class="p-4 text-center ${fichClass}">${gapHtml}</td>
             `;
             tbody.appendChild(tr);
@@ -1462,18 +1563,18 @@
         const doc = PROCESSED_DATA.find(d => d.id === docId); if(!doc) return;
         
         safeSetText('modalDocName', doc.name); safeSetText('modalDocSpec', doc.spec);
-        safeSetText('modalDocLic', doc.id); safeSetText('modalDocShare', `Share Total: ${doc.share.toFixed(1)}%`);
+        safeSetText('modalDocLic', doc.id); safeSetText('modalDocShare', `Share Lab: ${formatNumber(doc.share, 1)}%`);
 
         const badgesContainer = document.getElementById('modalBadges');
         let potLabel = `Potencial ${doc.catPotency}`; if(doc.catPotency === 'A') potLabel = `Alto Potencial (A)`; if(doc.catPotency === 'B') potLabel = `Medio Potencial (B)`; if(doc.catPotency === 'C') potLabel = `Bajo Potencial (C)`;
         let loyLabel = `Adopción ${doc.catLoyalty}`; if(doc.catLoyalty === 'A') loyLabel = `Alta Adopción (+)`; if(doc.catLoyalty === 'B') loyLabel = `Media Adopción`; if(doc.catLoyalty === 'C') loyLabel = `Baja Adopción (-)`;
 
-        badgesContainer.innerHTML = `<span class="modal-badge badge-pot-${doc.catPotency}">${potLabel}</span><span class="modal-badge badge-loy-${doc.catLoyalty}">${loyLabel}</span><span class="modal-badge bg-slate-800 text-white">Clasificación final ${doc.matrixLabel}</span>`;
+        badgesContainer.innerHTML = `<span class="modal-badge bg-blue-100 text-blue-800">${potLabel}</span><span class="modal-badge bg-teal-100 text-teal-800">${loyLabel}</span><span class="modal-badge bg-slate-800 text-white font-display">Clasificación ${doc.matrixLabel}</span>`;
 
         const gapContainer = document.getElementById('modalGapContainer');
         if (doc.gap > 0) {
-            gapContainer.className = "bg-orange-50 border border-orange-100 p-3 rounded-lg mb-4 flex justify-between items-center";
-            gapContainer.innerHTML = `<div class="flex items-center gap-2"><span class="material-symbols-outlined text-orange-500">trending_up</span><span class="text-sm font-bold text-orange-800">Oportunidad de Crecimiento</span></div><div class="text-sm text-orange-900">Faltan <span class="font-bold text-lg">${doc.gap} Rx</span> ${doc.targetLabel}</div>`;
+            gapContainer.className = "bg-rose-50 border border-rose-100 p-4 rounded-2xl mb-6 flex justify-between items-center shadow-sm";
+            gapContainer.innerHTML = `<div class="flex items-center gap-3"><span class="material-symbols-outlined text-rose-500 bg-rose-100 p-2 rounded-full">trending_up</span><span class="text-sm font-bold text-rose-800 font-display">Oportunidad de Crecimiento</span></div><div class="text-sm text-rose-900 font-medium">Faltan <span class="font-display font-black text-xl text-rose-600 bg-white px-2 py-1 rounded-lg border border-rose-200">${formatNumber(doc.gap)} Rx</span> ${doc.targetLabel}</div>`;
             gapContainer.classList.remove('hidden');
         } else { gapContainer.classList.add('hidden'); }
 
@@ -1491,37 +1592,37 @@
 
             fichHeader.innerHTML = `
                 <div class="flex items-center gap-2">
-                    <span class="material-symbols-outlined text-purple-600">folder_shared</span>
-                    <span>Datos del Fichero</span>
-                    <span class="${repColor} text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ml-2" title="${repTitle}">${repLabel}</span>
+                    <span class="material-symbols-outlined text-purple-600">contact_page</span>
+                    <span>Datos de Fichado</span>
+                    <span class="${repColor} text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ml-3 shadow-sm" title="${repTitle}">${repLabel}</span>
                 </div>
                 <span class="material-symbols-outlined text-purple-400 transition-transform group-open:rotate-180">expand_more</span>
             `;
             
             doc.ficheroData.forEach((repData, idx) => {
-                let html = `<div class="mb-4 bg-slate-50 rounded-xl border border-slate-200 shadow-sm relative group overflow-hidden transition hover:border-purple-300">`;
+                let html = `<div class="mb-4 bg-slate-50 rounded-[1.5rem] border border-slate-200 shadow-sm relative group overflow-hidden transition hover:border-purple-300">`;
                 
                 const lat = getValueCaseInsensitive(repData, 'GPS_LAT');
                 const lon = getValueCaseInsensitive(repData, 'GPS_LON');
                 let mapBtn = '';
                 
                 if(lat && lon) {
-                    mapBtn = `<a href="https://www.google.com/maps/search/?api=1&query=${lat},${lon}" target="_blank" class="flex items-center gap-1 bg-white border border-slate-200 text-slate-600 px-3 py-1 rounded-lg text-xs font-bold hover:text-blue-600 hover:border-blue-300 transition shadow-sm">
-                        <span class="material-symbols-outlined text-sm text-red-500">location_on</span> Ver Ubicación
+                    mapBtn = `<a href="https://www.google.com/maps/search/?api=1&query=${lat},${lon}" target="_blank" class="flex items-center gap-1 bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-xl text-xs font-bold hover:text-blue-600 hover:border-blue-300 transition shadow-sm">
+                        <span class="material-symbols-outlined text-[16px] text-rose-500">location_on</span> Ver Ubicación
                     </a>`;
                 }
 
-                html += `<div class="flex justify-between items-center p-3 border-b border-slate-100 bg-white">
+                html += `<div class="flex justify-between items-center p-4 border-b border-slate-200 bg-white">
                             <div class="flex items-center gap-2">
-                                <span class="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Representante #${idx+1}</span>
+                                <span class="bg-purple-100 text-purple-700 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-purple-200">Representante #${idx+1}</span>
                             </div>
                             ${mapBtn}
                          </div>`;
 
-                html += `<div class="p-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">`;
+                html += `<div class="p-5 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">`;
                 Object.entries(repData).forEach(([k,v]) => {
                      if(v && !k.toUpperCase().includes('GPS')) {
-                         html += `<div><span class="block text-slate-400 font-mono uppercase text-[10px] truncate mb-0.5" title="${k}">${k}</span><span class="font-semibold text-slate-700 break-words">${v}</span></div>`; 
+                         html += `<div><span class="block text-slate-400 font-mono uppercase text-[9px] tracking-widest truncate mb-1" title="${k}">${k}</span><span class="font-semibold text-slate-700 break-words text-sm">${v}</span></div>`; 
                      }
                 });
                 
@@ -1535,24 +1636,21 @@
         const markets = {}; doc.rows.forEach(r => { if(!markets[r.market]) markets[r.market] = []; markets[r.market].push(r); });
 
         for(const [mkt, rows] of Object.entries(markets)) {
-            const mktDiv = document.createElement('div'); mktDiv.className = "mb-6 border border-slate-200 rounded-lg overflow-hidden";
+            const mktDiv = document.createElement('div'); mktDiv.className = "mb-6 border border-slate-200 rounded-[1.5rem] overflow-hidden shadow-sm";
             const mktTotal = rows.reduce((s,r) => s+r.rx, 0); const mktPhq = rows.reduce((s,r) => s + (isPhq(r.prod)?r.rx:0), 0);
             const mktShare = mktTotal>0 ? (mktPhq/mktTotal)*100 : 0;
             
             let mktClass = 'C'; if(mktShare >= TH_LOY_HIGH) mktClass = 'A'; else if(mktShare > TH_LOY_LOW) mktClass = 'B';
-            let mktClassBadge = `<span class="text-xs font-bold text-slate-500 border border-slate-300 px-2 py-0.5 rounded bg-white whitespace-nowrap">Adopción ${mktClass}</span>`;
-            if(mktClass === 'A') mktClassBadge = `<span class="text-xs font-bold text-green-700 border border-green-200 bg-green-50 px-2 py-0.5 rounded whitespace-nowrap">Alta Adopción (+)</span>`;
-            if(mktClass === 'B') mktClassBadge = `<span class="text-xs font-bold text-yellow-700 border border-yellow-200 bg-yellow-50 px-2 py-0.5 rounded whitespace-nowrap">Media Adopción</span>`;
-            if(mktClass === 'C') mktClassBadge = `<span class="text-xs font-bold text-red-700 border border-red-200 bg-red-50 px-2 py-0.5 rounded whitespace-nowrap">Baja Adopción (-)</span>`;
+            let mktClassBadge = `<span class="text-[10px] font-bold text-slate-500 border border-slate-300 px-2 py-0.5 rounded-md bg-white">Adopción ${mktClass}</span>`;
+            if(mktClass === 'A') mktClassBadge = `<span class="text-[10px] font-bold text-green-700 border border-green-200 bg-green-50 px-2 py-0.5 rounded-md">Alta Adopción (+)</span>`;
+            if(mktClass === 'B') mktClassBadge = `<span class="text-[10px] font-bold text-yellow-700 border border-yellow-200 bg-yellow-50 px-2 py-0.5 rounded-md">Media Adopción</span>`;
+            if(mktClass === 'C') mktClassBadge = `<span class="text-[10px] font-bold text-red-700 border border-red-200 bg-red-50 px-2 py-0.5 rounded-md">Baja Adopción (-)</span>`;
 
-            mktDiv.innerHTML = `<table class="w-full text-xs table-fixed"><thead><tr class="bg-slate-50 border-b border-slate-200"><td class="p-3 w-[46%]"><div class="flex items-center gap-2"><span class="font-bold text-slate-700 text-sm">${mkt}</span>${mktClassBadge}</div></td><td class="p-3 text-right w-[18%]"><span class="text-slate-500 block text-[10px] uppercase">Total Rx</span><b class="text-slate-800 text-sm">${mktTotal}</b></td><td class="p-3 text-right w-[18%]"><span class="text-blue-600 block text-[10px] uppercase">Rx Lab</span><b class="text-blue-700 text-sm">${mktPhq}</b></td><td class="p-3 text-center w-[18%]"><span class="text-slate-500 block text-[10px] uppercase">Share</span><b class="text-slate-800 text-sm">${mktShare.toFixed(1)}%</b></td></tr><tr class="bg-white text-slate-400 border-b border-slate-100"><th class="p-2 text-left font-semibold">Producto</th><th class="p-2 text-right font-semibold">Rx Total</th><th class="p-2 text-right font-semibold">Rx Lab</th><th class="p-2 text-center font-semibold">Tipo</th></tr></thead><tbody class="divide-y divide-slate-100">${rows.sort((a,b)=>b.rx-a.rx).map(r => { const isMyProd = isPhq(r.prod); const rowClass = isMyProd ? 'bg-blue-50/50' : ''; const rxLabVal = isMyProd ? `<span class="font-bold text-blue-600">${r.rx}</span>` : '<span class="text-slate-300">-</span>'; const typeBadge = isMyProd ? '<span class="text-[10px] bg-blue-100 text-blue-700 px-1 rounded font-bold">PHQ</span>' : '<span class="text-[10px] text-slate-400">Comp</span>'; return `<tr class="${rowClass}"><td class="p-2 text-slate-700 font-medium truncate" title="${r.prod}">${r.prod}</td><td class="p-2 text-right font-mono text-slate-600">${r.rx}</td><td class="p-2 text-right font-mono">${rxLabVal}</td><td class="p-2 text-center">${typeBadge}</td></tr>`; }).join('')}</tbody></table>`;
+            mktDiv.innerHTML = `<table class="w-full text-sm table-fixed"><thead><tr class="bg-slate-50 border-b border-slate-200"><td class="p-4 w-[46%]"><div class="flex items-center gap-2"><span class="font-display font-bold text-slate-800 text-base">${mkt}</span>${mktClassBadge}</div></td><td class="p-4 text-right w-[18%]"><span class="text-slate-500 block text-[9px] font-bold uppercase tracking-widest">Total Rx</span><b class="text-slate-800 text-base font-mono">${formatNumber(mktTotal)}</b></td><td class="p-4 text-right w-[18%]"><span class="text-blue-600 block text-[9px] font-bold uppercase tracking-widest">Rx Lab</span><b class="text-blue-700 text-base font-mono">${formatNumber(mktPhq)}</b></td><td class="p-4 text-center w-[18%]"><span class="text-slate-500 block text-[9px] font-bold uppercase tracking-widest">Share</span><b class="text-slate-800 text-base">${formatNumber(mktShare, 1)}%</b></td></tr><tr class="bg-white text-slate-400 border-b border-slate-100 text-[11px] uppercase tracking-wider"><th class="p-3 text-left font-bold">Producto</th><th class="p-3 text-right font-bold">Rx Total</th><th class="p-3 text-right font-bold">Rx Lab</th><th class="p-3 text-center font-bold">Tipo</th></tr></thead><tbody class="divide-y divide-slate-100">${rows.sort((a,b)=>b.rx-a.rx).map(r => { const isMyProd = isPhq(r.prod); const rowClass = isMyProd ? 'bg-blue-50/40' : ''; const rxLabVal = isMyProd ? `<span class="font-bold text-blue-600 font-mono">${formatNumber(r.rx)}</span>` : '<span class="text-slate-300">-</span>'; const typeBadge = isMyProd ? '<span class="text-[9px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-bold">PHQ</span>' : '<span class="text-[9px] text-slate-400">Comp</span>'; return `<tr class="${rowClass} hover:bg-slate-50 transition"><td class="p-3 text-slate-700 font-medium truncate" title="${r.prod}">${r.prod}</td><td class="p-3 text-right font-mono text-slate-600">${formatNumber(r.rx)}</td><td class="p-3 text-right font-mono">${rxLabVal}</td><td class="p-3 text-center">${typeBadge}</td></tr>`; }).join('')}</tbody></table>`;
             content.appendChild(mktDiv);
         }
         
-        // --- SCROLL FIX: ---
-        // 1. Mostrar el modal primero
         document.getElementById('doctorDetailModal').classList.remove('hidden');
-        // 2. Forzar scroll al inicio del contenedor
         document.getElementById('doctorModalBody').scrollTop = 0;
     }
 </script>

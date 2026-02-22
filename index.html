@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f8fafc">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>MatrizAPP v15.5.0</title>
+    <title>MatrizAPP v15.5.1</title>
     <!-- M3 Expressive Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230A56D1'><path d='M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h8v8h-8z'/></svg>">
     
@@ -182,7 +182,7 @@
             </div>
             <div class="flex flex-col justify-center">
                 <h1 class="font-display font-bold text-xl leading-tight text-slate-800 tracking-tight">MatrizAPP</h1>
-                <span class="text-[10px] text-slate-500 font-medium tracking-wide">v15.5.0 • Dev H. Sanoja</span>
+                <span class="text-[10px] text-slate-500 font-medium tracking-wide">v15.5.1 • Dev H. Sanoja</span>
             </div>
         </div>
         <div class="flex items-center gap-2 md:gap-4">
@@ -771,12 +771,16 @@
 
     async function fetchFileAsJson(filename) {
         try {
-            const response = await fetch(filename);
+            // Se agregó caché busting para evitar que GitHub entregue una versión vieja
+            const response = await fetch(filename + '?v=' + new Date().getTime());
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const arrayBuffer = await response.arrayBuffer();
             const workbook = XLSX.read(arrayBuffer, { type: 'array' });
             return XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
-        } catch (error) { return null; }
+        } catch (error) { 
+            console.warn("Error cargando " + filename + ":", error);
+            return null; 
+        }
     }
 
     async function loadRepoData() {
@@ -789,9 +793,20 @@
             if (ficheroData) parseFicheroData(ficheroData);
             if (auditData && auditData.length > 0) { parseAuditData(auditData); dataLoaded = true; }
 
-            if (dataLoaded) { await processData(true); showToast("Datos cargados exitosamente"); } 
-            else { document.getElementById('restoringSession').classList.add('hidden'); document.getElementById('emptyState').classList.remove('hidden'); }
-        } catch (error) { document.getElementById('restoringSession').classList.add('hidden'); document.getElementById('emptyState').classList.remove('hidden'); showToast("Error de conexión"); }
+            // Condición ajustada: si RAW_DATA está vacío, aborta y quita el spinner de carga
+            if (dataLoaded && RAW_DATA.length > 0) { 
+                await processData(true); 
+                showToast("Datos cargados exitosamente"); 
+            } else { 
+                document.getElementById('restoringSession').classList.add('hidden'); 
+                document.getElementById('emptyState').classList.remove('hidden'); 
+                showToast("No se encontraron datos válidos o compatibles en el repositorio.");
+            }
+        } catch (error) { 
+            document.getElementById('restoringSession').classList.add('hidden'); 
+            document.getElementById('emptyState').classList.remove('hidden'); 
+            showToast("Error de conexión con el repositorio."); 
+        }
     }
 
     function parseFicheroData(fichJson) {
@@ -810,7 +825,8 @@
         RAW_DATA = [];
         json.forEach(row => {
             const vals = Object.values(row);
-            if (vals.length >= 10) { 
+            // CORRECCIÓN CLAVE: Se bajó el filtro estricto de 10 a 5 columnas para evitar que archivos CSV pequeños fueran descartados
+            if (vals.length >= 5) { 
                 RAW_DATA.push({
                     doc: String(vals[0] || "").trim(), license: String(vals[1] || "").trim(), market: String(vals[2] || "").trim(), prod: String(vals[3] || "").trim(), rx: parseInt(vals[4]) || 0,
                     address: String(vals[6] || "").trim(), zip: String(vals[7] || "").trim(), city: String(vals[8] || "").trim(), region: String(vals[9] || "").trim(),
@@ -1006,7 +1022,14 @@
                 saveSession();
             } catch (e) { errorEl.innerText = "Error: " + e.message; errorEl.classList.remove('hidden'); return; }
         }
-        if(RAW_DATA.length === 0) { if(!isRestoring) { errorEl.innerText = "No hay datos."; errorEl.classList.remove('hidden'); } return; }
+        
+        if(RAW_DATA.length === 0) { 
+            // CORRECCIÓN: Evita el spinner infinito si no hay datos procesables
+            document.getElementById('restoringSession').classList.add('hidden');
+            document.getElementById('emptyState').classList.remove('hidden');
+            if(!isRestoring) { errorEl.innerText = "No hay datos."; errorEl.classList.remove('hidden'); } 
+            return; 
+        }
 
         populateFilters(); 
         SELECTED_MARKETS = [...MARKET_LIST]; updateMarketCheckboxes(true);

@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f8fafc">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>MatrizAPP v15.4</title>
+    <title>MatrizAPP v15.4.1</title>
     <!-- M3 Expressive Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230A56D1'><path d='M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h8v8h-8z'/></svg>">
     
@@ -447,7 +447,7 @@
                 <div class="flex gap-2">
                     <button onclick="toggleSummaryCells()" class="text-xs font-bold bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-full transition flex items-center gap-2">
                         <span class="material-symbols-outlined text-sm">functions</span>
-                        <span id="btnSummaryText">Ver Análisis Lateral</span>
+                        <span id="btnSummaryText">Ver Subtotales</span>
                     </button>
                 </div>
             </div>
@@ -462,7 +462,7 @@
                     
                     <!-- Summary Column Header -->
                     <div class="summary-element flex-col justify-end pb-2 items-center">
-                        <span class="summary-header-title">Resumen Eje Y</span>
+                        <span class="summary-header-title">Resumen de Potencialidad</span>
                     </div>
 
                     <!-- Row A -->
@@ -491,7 +491,7 @@
             </div>
             <div class="responsive-table-wrapper">
                 <table class="w-full text-left border-collapse" id="mainTable">
-                    <thead class="bg-slate-100 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <thead class="bg-slate-200/60 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
                         <tr>
                             <th class="p-4">Clasificación final</th>
                             <th class="p-4">Médico</th>
@@ -516,7 +516,7 @@
             <h3 class="text-xl font-display font-bold text-slate-800 flex items-center gap-2">
                 <span class="material-symbols-outlined text-blue-600">database</span> Carga Manual (Admin)
             </h3>
-            <button class="text-slate-400 hover:text-rose-500 bg-white p-1 rounded-full shadow-sm" onclick="document.getElementById('uploadModal').classList.add('hidden')"><span class="material-symbols-outlined">close</span></button>
+            <button class="text-slate-600 hover:text-rose-600 bg-slate-200 hover:bg-rose-100 p-2 rounded-full shadow-sm transition" onclick="document.getElementById('uploadModal').classList.add('hidden')"><span class="material-symbols-outlined text-[20px]">close</span></button>
         </div>
         <div class="p-8 overflow-y-auto">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
@@ -571,7 +571,7 @@
                 <h3 class="text-xl font-display font-bold text-slate-800 flex items-center gap-2"><span class="material-symbols-outlined text-blue-600">category</span> Productos (PHQ)</h3>
                 <p class="text-xs font-medium text-slate-500 mt-1">Selecciona los productos objetivo para el análisis.</p>
             </div>
-            <button class="text-slate-400 hover:text-rose-500 bg-white p-1 rounded-full shadow-sm" onclick="document.getElementById('productModal').classList.add('hidden')"><span class="material-symbols-outlined">close</span></button>
+            <button class="text-slate-600 hover:text-rose-600 bg-slate-200 hover:bg-rose-100 p-2 rounded-full shadow-sm transition" onclick="document.getElementById('productModal').classList.add('hidden')"><span class="material-symbols-outlined text-[20px]">close</span></button>
         </div>
         
         <div class="p-6 overflow-y-auto flex-1 bg-white">
@@ -614,7 +614,7 @@
                     <span class="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg border border-blue-200 font-bold flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">pie_chart</span> <span id="modalDocShare">Share: 0%</span></span>
                 </div>
             </div>
-            <button class="text-slate-400 hover:text-slate-700 bg-white p-2 rounded-full shadow-sm transition" onclick="document.getElementById('doctorDetailModal').classList.add('hidden')"><span class="material-symbols-outlined">close</span></button>
+            <button class="text-slate-600 hover:text-rose-600 bg-slate-200 hover:bg-rose-100 p-2 rounded-full shadow-sm transition" onclick="document.getElementById('doctorDetailModal').classList.add('hidden')"><span class="material-symbols-outlined text-[20px]">close</span></button>
         </div>
         <div class="p-6 md:p-8 overflow-y-auto flex-1 bg-white" id="doctorModalBody">
             <div class="hidden" id="modalGapContainer"></div>
@@ -958,7 +958,7 @@
         const grid = document.getElementById('matrixGridElement');
         if (SHOW_SUMMARIES) { grid.classList.add('expanded'); } else { grid.classList.remove('expanded'); }
         elements.forEach(el => { if(SHOW_SUMMARIES) el.classList.add('show'); else el.classList.remove('show'); });
-        btnText.innerText = SHOW_SUMMARIES ? "Ocultar Análisis Lateral" : "Ver Análisis Lateral";
+        btnText.innerText = SHOW_SUMMARIES ? "Ocultar Subtotales" : "Ver Subtotales";
     }
 
     function toggleStats(e, key) {
@@ -1089,7 +1089,7 @@
                 d.gap > 0 ? `+${formatNumber(d.gap)}` : '-', 
                 formatNumber(d.totalRx), 
                 formatNumber(d.rxPhq), 
-                formatNumber(d.share, 1)+'%'
+                formatNumber(d.share, 2)+'%'
             ]);
 
             doc.autoTable({ 
@@ -1156,7 +1156,7 @@
                  rowStyle = "bg-rose-50/50 text-rose-900";
             }
 
-            html += `<tr class="${rowStyle}"><td class="p-3 ${nameStyle}">${item.prod} ${item.type==='PHQ'?'<span class="text-[9px] bg-blue-100 px-1 rounded ml-1 uppercase">PHQ</span>':''}</td><td class="p-3 text-right font-mono font-medium">${formatNumber(item.rx)}</td><td class="p-3 text-center ${shareStyle}">${formatNumber(share, 1)}%</td></tr>`;
+            html += `<tr class="${rowStyle}"><td class="p-3 ${nameStyle}">${item.prod} ${item.type==='PHQ'?'<span class="text-[9px] bg-blue-100 px-1 rounded ml-1 uppercase">PHQ</span>':''}</td><td class="p-3 text-right font-mono font-medium">${formatNumber(item.rx)}</td><td class="p-3 text-center ${shareStyle}">${formatNumber(share, 2)}%</td></tr>`;
         });
         
         html += `</tbody></table></div>`;
@@ -1432,7 +1432,7 @@
         const totalMyRx = PROCESSED_DATA.reduce((s, d) => s + d.rxPhq, 0);
         safeSetText('statMyRx', formatNumber(totalMyRx));
         const avgShare = grandTotal > 0 ? (totalMyRx / grandTotal) * 100 : 0;
-        safeSetText('statShare', formatNumber(avgShare, 1) + "%");
+        safeSetText('statShare', formatNumber(avgShare, 2) + "%");
         safeSetText('topCompName', topCompName); 
         safeSetText('topCompRx', formatNumber(topCompRx));
 
@@ -1445,9 +1445,9 @@
         const elBarComp = document.getElementById('barComp'); if(elBarComp) elBarComp.style.width = pctComp + "%";
         const elBarRest = document.getElementById('barRest'); if(elBarRest) elBarRest.style.width = pctRest + "%";
 
-        safeSetText('labelPhq', `PHQ: ${formatNumber(pctPhq, 1)}%`);
-        safeSetText('labelComp', `${topCompName.substring(0,8)}..: ${formatNumber(pctComp, 1)}%`);
-        safeSetText('labelRest', `Resto: ${formatNumber(pctRest, 1)}%`);
+        safeSetText('labelPhq', `PHQ: ${formatNumber(pctPhq, 2)}%`);
+        safeSetText('labelComp', `${topCompName.substring(0,8)}..: ${formatNumber(pctComp, 2)}%`);
+        safeSetText('labelRest', `Resto: ${formatNumber(pctRest, 2)}%`);
 
         const matrixKeys = ['A_C', 'A_B', 'A_A', 'B_C', 'B_B', 'B_A', 'C_C', 'C_B', 'C_A'];
         const summaries = { row_A: { rx:0, phq:0, count:0 }, row_B: { rx:0, phq:0, count:0 }, row_C: { rx:0, phq:0, count:0 }, col_C: { rx:0, phq:0, count:0 }, col_B: { rx:0, phq:0, count:0 }, col_A: { rx:0, phq:0, count:0 } };
@@ -1466,15 +1466,19 @@
             safeSetText(`count_${key}`, formatNumber(count));
             safeSetText(`rx_${key}`, compactNum(sumRx));
             safeSetText(`phq_${key}`, compactNum(sumPhq));
-            safeSetText(`ms_${key}`, formatNumber(avgMS, 0) + '%');
+            safeSetText(`ms_${key}`, formatNumber(avgMS, 2) + '%');
             safeSetText(`avg_tot_${key}`, formatNumber(avgTotPerDoc));
             safeSetText(`avg_phq_${key}`, formatNumber(avgPhqPerDoc));
-            safeSetText(`pct_drs_${key}`, formatNumber(pctOfUniverse, 1) + '%');
+            safeSetText(`pct_drs_${key}`, formatNumber(pctOfUniverse, 2) + '%');
 
             const tooltip = document.getElementById(`tooltip_${key}`);
             if(count > 0) {
-                const topDoc = subset.reduce((prev, current) => (prev.totalRx > current.totalRx) ? prev : current);
-                tooltip.innerHTML = `<span class="text-blue-300">Top Doc:</span><br><b>${topDoc.name.substring(0,18)}</b><br>Rx Mercado: ${formatNumber(topDoc.totalRx)}`;
+                const topDoc = subset.reduce((prev, current) => {
+                    if (prev.totalRx > current.totalRx) return prev;
+                    if (current.totalRx > prev.totalRx) return current;
+                    return (prev.rxPhq >= current.rxPhq) ? prev : current;
+                });
+                tooltip.innerHTML = `<span class="text-blue-300">Top Doc:</span><br><b>${topDoc.name.substring(0,18)}</b><br>Rx Mercado: ${formatNumber(topDoc.totalRx)}<br>Rx Lab: ${formatNumber(topDoc.rxPhq)}`;
             } else { tooltip.innerHTML = `Sin datos`; }
 
             if(summaries[`row_${pot}`]) { summaries[`row_${pot}`].rx += sumRx; summaries[`row_${pot}`].phq += sumPhq; summaries[`row_${pot}`].count += count; }
@@ -1484,7 +1488,7 @@
         Object.keys(summaries).forEach(k => {
             const s = summaries[k]; const share = s.rx > 0 ? (s.phq / s.rx)*100 : 0;
             safeSetText(`${k}_rx`, compactNum(s.rx)); safeSetText(`${k}_phq`, compactNum(s.phq));
-            safeSetText(`${k}_count`, formatNumber(s.count)); safeSetText(`${k}_share`, formatNumber(share, 1)+'%');
+            safeSetText(`${k}_count`, formatNumber(s.count)); safeSetText(`${k}_share`, formatNumber(share, 2)+'%');
         });
         renderTable();
     }
@@ -1546,7 +1550,7 @@
                 <td class="p-4 text-xs font-medium text-slate-500 ${fichClass}">${d.spec}</td>
                 <td class="p-4 text-right font-mono font-medium text-sm text-slate-600 ${fichClass}">${formatNumber(d.totalRx)}</td>
                 <td class="p-4 text-right font-mono text-sm font-bold text-blue-600 ${fichClass}">${formatNumber(d.rxPhq)}</td>
-                <td class="p-4 text-center text-xs font-bold text-slate-700 ${fichClass}">${formatNumber(d.share, 1)}%</td>
+                <td class="p-4 text-center text-xs font-bold text-slate-700 ${fichClass}">${formatNumber(d.share, 2)}%</td>
                 <td class="p-4 text-center ${fichClass}">${gapHtml}</td>
             `;
             tbody.appendChild(tr);
@@ -1563,7 +1567,7 @@
         const doc = PROCESSED_DATA.find(d => d.id === docId); if(!doc) return;
         
         safeSetText('modalDocName', doc.name); safeSetText('modalDocSpec', doc.spec);
-        safeSetText('modalDocLic', doc.id); safeSetText('modalDocShare', `Share Lab: ${formatNumber(doc.share, 1)}%`);
+        safeSetText('modalDocLic', doc.id); safeSetText('modalDocShare', `Share Lab: ${formatNumber(doc.share, 2)}%`);
 
         const badgesContainer = document.getElementById('modalBadges');
         let potLabel = `Potencial ${doc.catPotency}`; if(doc.catPotency === 'A') potLabel = `Alto Potencial (A)`; if(doc.catPotency === 'B') potLabel = `Medio Potencial (B)`; if(doc.catPotency === 'C') potLabel = `Bajo Potencial (C)`;
@@ -1646,7 +1650,7 @@
             if(mktClass === 'B') mktClassBadge = `<span class="text-[10px] font-bold text-yellow-700 border border-yellow-200 bg-yellow-50 px-2 py-0.5 rounded-md">Media Adopción</span>`;
             if(mktClass === 'C') mktClassBadge = `<span class="text-[10px] font-bold text-red-700 border border-red-200 bg-red-50 px-2 py-0.5 rounded-md">Baja Adopción (-)</span>`;
 
-            mktDiv.innerHTML = `<table class="w-full text-sm table-fixed"><thead><tr class="bg-slate-50 border-b border-slate-200"><td class="p-4 w-[46%]"><div class="flex items-center gap-2"><span class="font-display font-bold text-slate-800 text-base">${mkt}</span>${mktClassBadge}</div></td><td class="p-4 text-right w-[18%]"><span class="text-slate-500 block text-[9px] font-bold uppercase tracking-widest">Total Rx</span><b class="text-slate-800 text-base font-mono">${formatNumber(mktTotal)}</b></td><td class="p-4 text-right w-[18%]"><span class="text-blue-600 block text-[9px] font-bold uppercase tracking-widest">Rx Lab</span><b class="text-blue-700 text-base font-mono">${formatNumber(mktPhq)}</b></td><td class="p-4 text-center w-[18%]"><span class="text-slate-500 block text-[9px] font-bold uppercase tracking-widest">Share</span><b class="text-slate-800 text-base">${formatNumber(mktShare, 1)}%</b></td></tr><tr class="bg-white text-slate-400 border-b border-slate-100 text-[11px] uppercase tracking-wider"><th class="p-3 text-left font-bold">Producto</th><th class="p-3 text-right font-bold">Rx Total</th><th class="p-3 text-right font-bold">Rx Lab</th><th class="p-3 text-center font-bold">Tipo</th></tr></thead><tbody class="divide-y divide-slate-100">${rows.sort((a,b)=>b.rx-a.rx).map(r => { const isMyProd = isPhq(r.prod); const rowClass = isMyProd ? 'bg-blue-50/40' : ''; const rxLabVal = isMyProd ? `<span class="font-bold text-blue-600 font-mono">${formatNumber(r.rx)}</span>` : '<span class="text-slate-300">-</span>'; const typeBadge = isMyProd ? '<span class="text-[9px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-bold">PHQ</span>' : '<span class="text-[9px] text-slate-400">Comp</span>'; return `<tr class="${rowClass} hover:bg-slate-50 transition"><td class="p-3 text-slate-700 font-medium truncate" title="${r.prod}">${r.prod}</td><td class="p-3 text-right font-mono text-slate-600">${formatNumber(r.rx)}</td><td class="p-3 text-right font-mono">${rxLabVal}</td><td class="p-3 text-center">${typeBadge}</td></tr>`; }).join('')}</tbody></table>`;
+            mktDiv.innerHTML = `<table class="w-full text-sm table-fixed"><thead><tr class="bg-slate-50 border-b border-slate-200"><td class="p-4 w-[46%]"><div class="flex items-center gap-2"><span class="font-display font-bold text-slate-800 text-base">${mkt}</span>${mktClassBadge}</div></td><td class="p-4 text-right w-[18%]"><span class="text-slate-500 block text-[9px] font-bold uppercase tracking-widest">Total Rx</span><b class="text-slate-800 text-base font-mono">${formatNumber(mktTotal)}</b></td><td class="p-4 text-right w-[18%]"><span class="text-blue-600 block text-[9px] font-bold uppercase tracking-widest">Rx Lab</span><b class="text-blue-700 text-base font-mono">${formatNumber(mktPhq)}</b></td><td class="p-4 text-center w-[18%]"><span class="text-slate-500 block text-[9px] font-bold uppercase tracking-widest">Share</span><b class="text-slate-800 text-base">${formatNumber(mktShare, 2)}%</b></td></tr><tr class="bg-white text-slate-400 border-b border-slate-100 text-[11px] uppercase tracking-wider"><th class="p-3 text-left font-bold">Producto</th><th class="p-3 text-right font-bold">Rx Total</th><th class="p-3 text-right font-bold">Rx Lab</th><th class="p-3 text-center font-bold">Tipo</th></tr></thead><tbody class="divide-y divide-slate-100">${rows.sort((a,b)=>b.rx-a.rx).map(r => { const isMyProd = isPhq(r.prod); const rowClass = isMyProd ? 'bg-blue-50/40' : ''; const rxLabVal = isMyProd ? `<span class="font-bold text-blue-600 font-mono">${formatNumber(r.rx)}</span>` : '<span class="text-slate-300">-</span>'; const typeBadge = isMyProd ? '<span class="text-[9px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-bold">PHQ</span>' : '<span class="text-[9px] text-slate-400">Comp</span>'; return `<tr class="${rowClass} hover:bg-slate-50 transition"><td class="p-3 text-slate-700 font-medium truncate" title="${r.prod}">${r.prod}</td><td class="p-3 text-right font-mono text-slate-600">${formatNumber(r.rx)}</td><td class="p-3 text-right font-mono">${rxLabVal}</td><td class="p-3 text-center">${typeBadge}</td></tr>`; }).join('')}</tbody></table>`;
             content.appendChild(mktDiv);
         }
         

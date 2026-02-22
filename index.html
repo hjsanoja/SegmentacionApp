@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f8fafc">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>MatrizAPP v15.5.1</title>
+    <title>MatrizAPP v15.5.2</title>
     <!-- M3 Expressive Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230A56D1'><path d='M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h8v8h-8z'/></svg>">
     
@@ -182,7 +182,7 @@
             </div>
             <div class="flex flex-col justify-center">
                 <h1 class="font-display font-bold text-xl leading-tight text-slate-800 tracking-tight">MatrizAPP</h1>
-                <span class="text-[10px] text-slate-500 font-medium tracking-wide">v15.5.1 • Dev H. Sanoja</span>
+                <span class="text-[10px] text-slate-500 font-medium tracking-wide">v15.5.2 • Dev H. Sanoja</span>
             </div>
         </div>
         <div class="flex items-center gap-2 md:gap-4">
@@ -1031,20 +1031,36 @@
             return; 
         }
 
-        populateFilters(); 
-        SELECTED_MARKETS = [...MARKET_LIST]; updateMarketCheckboxes(true);
-        aggregateAndCalculate();
+        try {
+            populateFilters(); 
+            SELECTED_MARKETS = [...MARKET_LIST];
+            
+            // FIX: Selecciona visual y lógicamente todos los mercados sin llamar a la función inexistente.
+            document.querySelectorAll('#marketListContainer input[type="checkbox"]').forEach(cb => cb.checked = true);
+            const selectAll = document.getElementById('selectAllMarkets');
+            if (selectAll) selectAll.checked = true;
+            safeSetText('marketBtnText', 'Todos');
 
-        document.getElementById('restoringSession').classList.add('hidden');
-        document.getElementById('uploadModal').classList.add('hidden');
-        document.getElementById('emptyState').classList.add('hidden');
-        document.getElementById('dashboardContent').classList.remove('hidden');
-        document.getElementById('filterBar').classList.remove('hidden'); document.getElementById('filterBar').style.display = 'flex';
-        
-        // Render Map Correctly after unhiding
-        setTimeout(() => { if(myMap) myMap.invalidateSize(); }, 300);
-        
-        if(!isRestoring) showToast("Datos procesados exitosamente");
+            aggregateAndCalculate();
+
+            document.getElementById('restoringSession').classList.add('hidden');
+            document.getElementById('uploadModal').classList.add('hidden');
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('dashboardContent').classList.remove('hidden');
+            document.getElementById('filterBar').classList.remove('hidden'); 
+            document.getElementById('filterBar').style.display = 'flex';
+            
+            // Render Map Correctly after unhiding
+            setTimeout(() => { if(myMap) myMap.invalidateSize(); }, 300);
+            
+            if(!isRestoring) showToast("Datos procesados exitosamente");
+            
+        } catch (err) {
+            console.error("Error al procesar:", err);
+            document.getElementById('restoringSession').classList.add('hidden');
+            document.getElementById('emptyState').classList.remove('hidden');
+            showToast("Error procesando los datos: " + err.message);
+        }
     }
 
     function populateFilters() {

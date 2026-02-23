@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f8fafc">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>MatrizAPP v16.0.0 Cloud</title>
+    <title>MatrizAPP v16.1.0 Cloud</title>
     <!-- M3 Expressive Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230A56D1'><path d='M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h8v8h-8z'/></svg>">
     
@@ -26,7 +26,6 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, deleteDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Exponer a window para poder usarlo en nuestros scripts
         window.firebaseModules = { initializeApp, getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, getFirestore, doc, setDoc, deleteDoc, collection, onSnapshot };
     </script>
 
@@ -178,7 +177,7 @@
             </div>
             <div class="flex flex-col justify-center">
                 <h1 class="font-display font-bold text-xl leading-tight text-slate-800 tracking-tight">MatrizAPP</h1>
-                <span class="text-[10px] text-slate-500 font-medium tracking-wide">v16.0.0 • Cloud Sync</span>
+                <span class="text-[10px] text-slate-500 font-medium tracking-wide">v16.1.0 • Cloud Sync</span>
             </div>
         </div>
         <div class="flex items-center gap-2 md:gap-4">
@@ -260,8 +259,8 @@
             
             <!-- Admin Actions Row -->
             <div class="flex justify-between items-center">
-                <button onclick="exportValidations()" class="text-xs bg-indigo-50 text-indigo-700 border border-indigo-200 px-4 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-indigo-100 transition shadow-sm">
-                    <span class="material-symbols-outlined text-[16px]">cloud_download</span> Descargar Validaciones (Nube)
+                <button onclick="exportValidations()" class="text-sm bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-indigo-700 transition shadow-md">
+                    <span class="material-symbols-outlined text-[18px]">cloud_download</span> Descargar Validaciones (Nube)
                 </button>
                 <div class="text-[10px] text-slate-400 text-right leading-tight italic">
                     Ajusta los sliders para recalcular la matriz en tiempo real.
@@ -818,7 +817,6 @@
             const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
             appId = typeof __app_id !== 'undefined' ? __app_id : 'matriz-app-default';
             
-            // Si no hay configuración (entorno local sin canvas), salimos sin error
             if(Object.keys(firebaseConfig).length === 0) {
                 console.log("Modo Nube desactivado (Falta configuración). Se usará solo memoria local.");
                 return;
@@ -830,7 +828,6 @@
             auth = getAuth(app);
             db = getFirestore(app);
 
-            // Regla Obligatoria: Autenticación primero
             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                 await signInWithCustomToken(auth, __initial_auth_token);
             } else {
@@ -862,26 +859,26 @@
         const { collection, onSnapshot } = window.firebaseModules;
         const validationsRef = collection(db, 'artifacts', appId, 'public', 'data', 'validations');
         
-        // Regla Obligatoria: Callback de error incluido
         unsubValidations = onSnapshot(validationsRef, (snapshot) => {
             snapshot.forEach(docSnap => {
                 const data = docSnap.data();
                 const key = `${data.docId}|${data.market}`;
                 
-                // Procesar datos de la nube
                 if(data.deleted) {
                     delete LOCAL_VALIDATIONS[key];
                 } else {
                     LOCAL_VALIDATIONS[key] = data;
                 }
             });
-            // Guardar el estado sincronizado localmente
             localStorage.setItem('PHQ_VALIDATIONS', JSON.stringify(LOCAL_VALIDATIONS));
             
-            // Si el modal de un doctor está abierto, podríamos refrescarlo visualmente
+            // Refrescar tabla si está cargada para mostrar las etiquetas de "Validado"
+            if (CURRENT_TABLE_DATA.length > 0) {
+                renderTable();
+            }
+
             const modal = document.getElementById('doctorDetailModal');
             if(!modal.classList.contains('hidden')) {
-                // Pequeño truco para forzar actualización de los botones si estamos viendo uno
                 const openDocId = document.getElementById('modalDocLic').innerText;
                 if(openDocId) openDoctorModal(openDocId);
             }
@@ -951,7 +948,7 @@
     // --- CONFIGURACIÓN DE ARCHIVOS GITHUB ---
     const CONFIG_FILES = { AUDIT: 'datacloseup.csv', FICHERO: 'fichero_medico.csv' };
 
-    // --- FORMATTERS (ES-AR Style: miles '.', decimal ',') ---
+    // --- FORMATTERS ---
     function formatNumber(num, decimals = 0) {
         return new Intl.NumberFormat('es-AR', {
             minimumFractionDigits: decimals,
@@ -963,7 +960,7 @@
     
     // --- STATE VARIABLES ---
     let RAW_DATA = [];
-    let PHQ_PRODUCTS = ["LEPRIT", "ESOZ", "FLUDIL", "TIOCOLFEN", "SULAMP", "BUMETIN", "TIOCOL", "MONUKAST", "GLUSTAR", "CANDETIQUE", "OLMETIQUE", "XAROX"]; // Default if none loaded
+    let PHQ_PRODUCTS = ["LEPRIT", "ESOZ", "FLUDIL", "TIOCOLFEN", "SULAMP", "BUMETIN", "TIOCOL", "MONUKAST", "GLUSTAR", "CANDETIQUE", "OLMETIQUE", "XAROX"];
     let PROCESSED_DATA = [];
     let CURRENT_TABLE_DATA = []; 
     let MATRIX_FILTER = null;
@@ -974,22 +971,18 @@
     let SHOW_SUMMARIES = false;
     let groupByInstitution = false;
     
-    // Variables para la selección de VM
     let CURRENT_VM_NAME = localStorage.getItem('CURRENT_VM_NAME') || "";
-    let ALL_REPS = []; // Nueva lista de todos los representantes para el modal
-    let PENDING_VALIDATION = null; // Para guardar la acción mientras elige el nombre
+    let ALL_REPS = []; 
+    let PENDING_VALIDATION = null; 
     
-    // Paginación State
     let currentPage = 1;
     const ROWS_PER_PAGE = 300;
     
-    // Config States
     let TH_LOY_LOW = 33;
     let TH_LOY_HIGH = 66;
     let TH_POT_LOW = 33;
     let TH_POT_HIGH = 66;
 
-    // --- Persistence Logic (LocalForage) ---
     async function initStorage() {
         if(!window.localforage) return;
         localforage.config({ name: 'PHQ_Matrix_DB', storeName: 'session_data' });
@@ -1003,17 +996,10 @@
             const savedConfig = await localforage.getItem('PHQ_PRODUCTS');
 
             if (savedAudit && savedAudit.length > 0) {
-                console.log("Restoring session from IndexedDB...");
                 safeSetText('loadingText', 'Restaurando sesión y conectando nube...');
                 RAW_DATA = savedAudit;
-                
-                if (savedFichero) {
-                    FICHERO_MAP = new Map(savedFichero);
-                }
-                
-                if (savedConfig) {
-                    PHQ_PRODUCTS = savedConfig;
-                }
+                if (savedFichero) { FICHERO_MAP = new Map(savedFichero); }
+                if (savedConfig) { PHQ_PRODUCTS = savedConfig; }
 
                 await processData(true);
                 showToast("Sesión restaurada correctamente");
@@ -1055,9 +1041,7 @@
 
             let dataLoaded = false;
 
-            if (ficheroData) {
-                parseFicheroData(ficheroData);
-            }
+            if (ficheroData) { parseFicheroData(ficheroData); }
 
             if (auditData && auditData.length > 0) {
                 parseAuditData(auditData);
@@ -1113,7 +1097,6 @@
             await localforage.setItem('RAW_DATA', RAW_DATA);
             await localforage.setItem('FICHERO_DATA', Array.from(FICHERO_MAP.entries())); 
             await localforage.setItem('PHQ_PRODUCTS', PHQ_PRODUCTS);
-            console.log("Session saved to IndexedDB");
         } catch (e) {
             console.error("Save Error:", e);
         }
@@ -1126,7 +1109,6 @@
         setTimeout(() => t.classList.remove('show'), 3000);
     }
 
-    // --- Generate Matrix Cells Structure ---
     function generateMatrixGridHTML() {
         const container = document.getElementById('matrixContainer');
         if(!container) return;
@@ -1135,39 +1117,28 @@
             {id: 'cell_A_C', label: 'A-', title: 'Conquista'},
             {id: 'cell_A_B', label: 'A', title: 'Desarrollo'},
             {id: 'cell_A_A', label: 'A+', title: 'Defensa'},
-            
             {id: 'cell_B_C', label: 'B-', title: 'Mantenimiento'},
             {id: 'cell_B_B', label: 'B', title: 'Medio'},
             {id: 'cell_B_A', label: 'B+', title: 'Fidelización'},
-            
             {id: 'cell_C_C', label: 'C-', title: 'Bajo'},
             {id: 'cell_C_B', label: 'C', title: 'Medio'},
             {id: 'cell_C_A', label: 'C+', title: 'Alto'}
         ];
 
         let html = '';
-        
-        // Row A
         cellIds.slice(0,3).forEach(c => html += generateSingleCellHTML(c));
         html += generateSummaryCellHTML('row_A', 'Potencial A');
-        
-        // Row B
         html += `<div class="matrix-header-row border-r-2 pr-4 border-slate-100"><span class="text-blue-700 text-center font-bold">Medio Potencial (B)</span><span class="text-[10px] font-medium text-slate-400 mt-2" id="row_label_B">33% - 66%</span></div>`;
         cellIds.slice(3,6).forEach(c => html += generateSingleCellHTML(c));
         html += generateSummaryCellHTML('row_B', 'Potencial B');
-        
-        // Row C
         html += `<div class="matrix-header-row border-r-2 pr-4 border-slate-100"><span class="text-slate-400 text-center font-bold">Bajo Potencial (C)</span><span class="text-[10px] font-medium text-slate-300 mt-2" id="row_label_C">> 66%</span></div>`;
         cellIds.slice(6,9).forEach(c => html += generateSingleCellHTML(c));
         html += generateSummaryCellHTML('row_C', 'Potencial C');
-
-        // Bottom Summary Row
         html += `<div class="summary-element flex items-center justify-end font-bold text-xs text-slate-500 uppercase tracking-wide pr-4">Resumen Adopción</div>`;
         html += generateSummaryCellHTML('col_C', 'Adopción Baja');
         html += generateSummaryCellHTML('col_B', 'Adopción Media');
         html += generateSummaryCellHTML('col_A', 'Adopción Alta');
         html += `<div class="summary-element bg-slate-100 rounded-[24px] items-center justify-center text-xs text-slate-500 font-display font-bold uppercase tracking-widest border border-slate-200">Universo<br>Total</div>`;
-
         container.innerHTML = html;
     }
 
@@ -1244,20 +1215,17 @@
 
     function normalizeKey(key) { if(!key) return ""; let s = String(key).trim(); return s.replace(/^0+/, ''); }
 
-    // --- INITIALIZATION ---
     window.addEventListener('DOMContentLoaded', () => { 
         generateMatrixGridHTML(); 
         document.getElementById('sliderLow').value = TH_LOY_LOW;
         document.getElementById('sliderHigh').value = TH_LOY_HIGH;
         updateThresholds();
         
-        // Inicializar Firebase
         initFirebase().then(() => {
             initStorage(); 
         });
     });
 
-    // --- Products/Config Logic ---
     function openProductModal() {
         renderProductCheckboxes();
         document.getElementById('productModal').classList.remove('hidden');
@@ -1303,7 +1271,6 @@
 
     function isPhq(prodName) { if(!prodName) return false; const upper = prodName.toUpperCase(); return PHQ_PRODUCTS.some(p => upper.includes(p)); }
 
-    // --- Dynamic Threshold Logic ---
     function updateThresholds() {
         const low = parseInt(document.getElementById('sliderLow').value);
         const high = parseInt(document.getElementById('sliderHigh').value);
@@ -1334,7 +1301,6 @@
         if(PROCESSED_DATA.length > 0) applyFilters();
     }
 
-    // --- Export Logic ---
     function exportPDF() {
         try {
             const { jsPDF } = window.jspdf;
@@ -1415,9 +1381,7 @@
         XLSX.writeFile(wb, "Analisis_PHQ_Matrix.xlsx");
     }
 
-    // --- Export Validaciones CLOUD ---
     function exportValidations() {
-        // Al estar sincronizado, LOCAL_VALIDATIONS contiene todo lo de la nube
         const vals = Object.values(LOCAL_VALIDATIONS);
         if(vals.length === 0) { showToast("Aún no hay validaciones registradas."); return; }
         
@@ -1527,7 +1491,6 @@
         });
     }
 
-    // --- DATA PROCESSING ---
     async function processData(isRestoring = false) {
         const errorEl = document.getElementById('errorMsg');
         errorEl.classList.add('hidden');
@@ -1930,9 +1893,18 @@
 
             let instIconHtml = d.isInst ? `<span class="bg-indigo-100 text-indigo-700 text-[10px] px-2 py-0.5 rounded-full font-bold ml-2 border border-indigo-200">${d.docCount} Docs</span>` : "";
             
+            // NUEVO: Mostrar un indicador si el médico ya fue validado en la nube
+            let hasValidation = false;
+            if(d.isInst) {
+                 hasValidation = d.doctors.some(doc => Object.keys(LOCAL_VALIDATIONS).some(k => k.startsWith(doc.id + '|')));
+            } else {
+                 hasValidation = Object.keys(LOCAL_VALIDATIONS).some(k => k.startsWith(d.id + '|'));
+            }
+            let valBadge = hasValidation ? `<span class="bg-teal-50 text-teal-700 text-[10px] px-2 py-0.5 rounded-full font-bold ml-2 flex items-center gap-1 border border-teal-200 shadow-sm" title="Validación guardada en la nube"><span class="material-symbols-outlined text-[12px]">cloud_done</span> Validado</span>` : '';
+
             tr.innerHTML = `
                 <td class="p-4 ${fichClass}"><span class="font-bold font-display text-xs px-2 py-1.5 rounded-lg ${colorClass}">${d.matrixLabel}</span></td>
-                <td class="p-4 ${fichClass}"><div class="font-bold text-sm text-slate-700 group-hover:text-blue-600 flex items-center transition">${d.name.substring(0,45)} ${fichIcon} ${instIconHtml}</div></td>
+                <td class="p-4 ${fichClass}"><div class="font-bold text-sm text-slate-700 group-hover:text-blue-600 flex items-center transition truncate max-w-[300px]" title="${d.name}">${d.name.substring(0,40)} ${fichIcon} ${instIconHtml} ${valBadge}</div></td>
                 <td class="p-4 text-xs font-medium text-slate-500 ${fichClass}">${d.spec}</td>
                 <td class="p-4 text-right font-mono font-medium text-sm text-slate-600 ${fichClass}">${formatNumber(d.totalRx)}</td>
                 <td class="p-4 text-right font-mono text-sm font-bold text-blue-600 ${fichClass}">${formatNumber(d.rxPhq)}</td>
@@ -2042,7 +2014,6 @@
         });
     }
 
-    // --- LÓGICA DE SELECCIÓN DE VM (MODAL) ---
     function promptVmSelection(docId, market, valClass) {
         PENDING_VALIDATION = { docId, market, valClass };
         document.getElementById('vmSearchInput').value = '';
@@ -2092,7 +2063,6 @@
         PENDING_VALIDATION = null;
     }
 
-    // --- LÓGICA DE VALIDACIÓN A LA NUBE ---
     async function saveValidation(docId, market, valClass) {
         if(!CURRENT_VM_NAME) {
             promptVmSelection(docId, market, valClass);
@@ -2102,7 +2072,6 @@
         const key = `${docId}|${market}`;
         let isDelete = false;
         
-        // Si ya seleccionó la misma, la desmarcamos (toggle)
         if(LOCAL_VALIDATIONS[key] && LOCAL_VALIDATIONS[key].valClass === valClass) {
             delete LOCAL_VALIDATIONS[key];
             isDelete = true;
@@ -2116,18 +2085,17 @@
             };
         }
         
-        // Guardar Local Inmediato para UI fluida
         localStorage.setItem('PHQ_VALIDATIONS', JSON.stringify(LOCAL_VALIDATIONS));
         openDoctorModal(docId); 
+        // Forzamos actualización de la tabla para mostrar/ocultar el icon de validado
+        renderTable();
         
         if(isDelete) { showToast("Validación eliminada"); } 
         else { showToast("Validación guardada por " + CURRENT_VM_NAME); }
 
-        // Sincronizar a Firestore en la nube
         if (currentUser && db) {
             try {
                 const { doc, setDoc, deleteDoc } = window.firebaseModules;
-                // Sanitizar la llave para que sirva de ID seguro en la nube
                 const safeKey = key.replace(/[^a-zA-Z0-9_-]/g, '_');
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'validations', safeKey);
                 
@@ -2230,7 +2198,6 @@
             if(mktClass === 'B') mktClassBadge = `<span class="text-[10px] font-bold text-yellow-700 border border-yellow-200 bg-yellow-50 px-2 py-0.5 rounded-md">Media Adopción</span>`;
             if(mktClass === 'C') mktClassBadge = `<span class="text-[10px] font-bold text-red-700 border border-red-200 bg-red-50 px-2 py-0.5 rounded-md">Baja Adopción (-)</span>`;
 
-            // Verificación de Validación Existente
             const valKey = `${doc.id}|${mkt}`;
             const currentVal = LOCAL_VALIDATIONS[valKey];
             

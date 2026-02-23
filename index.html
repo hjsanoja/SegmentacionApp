@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f8fafc">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>MatrizAPP v15.4.2</title>
+    <title>MatrizAPP v15.4.2.1</title>
     <!-- M3 Expressive Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230A56D1'><path d='M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h8v8h-8z'/></svg>">
     
@@ -636,18 +636,33 @@
 <!-- Institution Detail Modal M3 -->
 <div class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[70] flex items-center justify-center p-4 transition-opacity" id="institutionModal">
     <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-5xl max-h-[85vh] flex flex-col">
-        <div class="p-6 border-b border-slate-100 bg-slate-50 rounded-t-[2rem] flex justify-between items-start">
-            <div>
-                <div class="flex items-center gap-2 mb-2">
-                    <span class="material-symbols-outlined text-indigo-500 bg-indigo-100 p-1.5 rounded-lg text-lg">domain</span>
-                    <span class="text-xs font-bold text-indigo-600 uppercase tracking-widest" id="instModalCat">Institución</span>
+        <div class="p-6 border-b border-slate-100 bg-slate-50 rounded-t-[2rem] flex flex-col gap-4">
+            <div class="flex justify-between items-start">
+                <div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="material-symbols-outlined text-indigo-500 bg-indigo-100 p-1.5 rounded-lg text-lg">domain</span>
+                        <span class="text-xs font-bold text-indigo-600 uppercase tracking-widest" id="instModalCat">Institución</span>
+                        <span id="instModalMapBtn"></span>
+                    </div>
+                    <h3 class="text-2xl font-display font-bold text-slate-800" id="instModalName">Clínica Ejemplo</h3>
+                    <p class="text-sm font-medium text-slate-500 mt-1 flex items-center gap-2" id="instModalStats">
+                        <span class="bg-white px-2 py-1 rounded border border-slate-200">0 Médicos</span>
+                    </p>
                 </div>
-                <h3 class="text-2xl font-display font-bold text-slate-800" id="instModalName">Clínica Ejemplo</h3>
-                <p class="text-sm font-medium text-slate-500 mt-1 flex items-center gap-2" id="instModalStats">
-                    <span class="bg-white px-2 py-1 rounded border border-slate-200">0 Médicos</span>
-                </p>
+                <button class="text-slate-600 hover:text-rose-600 bg-slate-200 hover:bg-rose-100 p-2 rounded-full shadow-sm transition" onclick="document.getElementById('institutionModal').classList.add('hidden')"><span class="material-symbols-outlined text-[20px]">close</span></button>
             </div>
-            <button class="text-slate-600 hover:text-rose-600 bg-slate-200 hover:bg-rose-100 p-2 rounded-full shadow-sm transition" onclick="document.getElementById('institutionModal').classList.add('hidden')"><span class="material-symbols-outlined text-[20px]">close</span></button>
+            
+            <div class="flex flex-col md:flex-row gap-4 items-end justify-between border-t border-slate-200/60 pt-4">
+                <div class="w-full md:w-1/2">
+                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">pie_chart</span> Distribución de Especialidades</div>
+                    <div id="instModalSpecChart" class="w-full h-3 flex rounded-full overflow-hidden bg-slate-200 shadow-inner"></div>
+                    <div id="instModalSpecLegend" class="flex gap-2.5 mt-2 flex-wrap"></div>
+                </div>
+                <div class="w-full md:w-64 relative">
+                    <span class="material-symbols-outlined absolute left-3 top-2 text-slate-400 text-[18px]">search</span>
+                    <input type="text" id="instModalSearch" placeholder="Filtrar médicos..." class="w-full pl-9 pr-4 py-1.5 border border-slate-300 rounded-full text-xs focus:ring-2 focus:ring-blue-500 outline-none transition bg-white" onkeyup="filterInstitutionModal()">
+                </div>
+            </div>
         </div>
         
         <div class="p-0 overflow-y-auto flex-1 bg-white">
@@ -1188,7 +1203,30 @@
 
     function exportExcel() {
         let data = CURRENT_TABLE_DATA;
-        const exportData = data.map(d => ({ "Clasificación final": d.matrixLabel, "Médico / Institución": d.name, "Rx Faltantes": d.gap, "Recetas Totales": d.totalRx, "Recetas Lab": d.rxPhq, "Share %": parseFloat(d.share.toFixed(2)) }));
+        let exportData;
+        
+        if (groupByInstitution) {
+            exportData = data.map(d => ({ 
+                "Clasificación final": d.matrixLabel, 
+                "Institución / Dirección": d.name, 
+                "Cant. Médicos": d.docCount,
+                "Rx Faltantes": d.gap, 
+                "Recetas Totales": d.totalRx, 
+                "Recetas Lab": d.rxPhq, 
+                "Share %": parseFloat(d.share.toFixed(2)) 
+            }));
+        } else {
+            exportData = data.map(d => ({ 
+                "Clasificación final": d.matrixLabel, 
+                "Médico": d.name, 
+                "Especialidad": d.spec,
+                "Rx Faltantes": d.gap, 
+                "Recetas Totales": d.totalRx, 
+                "Recetas Lab": d.rxPhq, 
+                "Share %": parseFloat(d.share.toFixed(2)) 
+            }));
+        }
+        
         const ws = XLSX.utils.json_to_sheet(exportData);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Matriz PHQ");
@@ -1740,6 +1778,49 @@
             <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-200"><strong>${formatNumber(inst.rxPhq)}</strong> Rx Lab</span>
         `;
 
+        // 1. Integración Mapa
+        let mapLat = null, mapLon = null;
+        for(const doc of inst.doctors) {
+            if(doc.ficheroData) {
+                for(const fd of doc.ficheroData) {
+                    const lat = getValueCaseInsensitive(fd, 'GPS_LAT');
+                    const lon = getValueCaseInsensitive(fd, 'GPS_LON');
+                    if(lat && lon) { mapLat = lat; mapLon = lon; break; }
+                }
+            }
+            if(mapLat) break;
+        }
+        const mapBtnContainer = document.getElementById('instModalMapBtn');
+        if(mapLat && mapLon) {
+            mapBtnContainer.innerHTML = `<a href="https://www.google.com/maps/search/?api=1&query=${mapLat},${mapLon}" target="_blank" class="flex items-center gap-1 bg-white border border-slate-200 text-slate-600 px-2 py-0.5 rounded-lg text-[10px] font-bold hover:text-rose-600 hover:border-rose-300 transition shadow-sm"><span class="material-symbols-outlined text-[14px]">location_on</span> Ver Mapa</a>`;
+        } else { mapBtnContainer.innerHTML = ''; }
+
+        // 2. Gráfico Resumen Especialidades
+        const specCounts = {};
+        inst.doctors.forEach(d => specCounts[d.spec] = (specCounts[d.spec] || 0) + 1);
+        const specArray = Object.entries(specCounts).sort((a,b) => b[1] - a[1]);
+        
+        const colors = ['bg-blue-500', 'bg-teal-500', 'bg-purple-500', 'bg-amber-500', 'bg-rose-500', 'bg-slate-400'];
+        const textColors = ['text-blue-600', 'text-teal-600', 'text-purple-600', 'text-amber-600', 'text-rose-600', 'text-slate-500'];
+        
+        let chartHtml = ''; let legendHtml = '';
+        specArray.forEach((s, idx) => {
+            const pct = (s[1] / inst.docCount) * 100;
+            const c = colors[idx % colors.length]; const tc = textColors[idx % textColors.length];
+            chartHtml += `<div class="${c} h-full transition-all" style="width: ${pct}%" title="${s[0]}: ${s[1]}"></div>`;
+            if(idx < 4) {
+                legendHtml += `<span class="text-[9px] font-bold ${tc} flex items-center gap-1"><div class="w-2 h-2 rounded-full ${c}"></div> ${s[0].substring(0,10)} (${s[1]})</span>`;
+            }
+        });
+        if(specArray.length > 4) legendHtml += `<span class="text-[9px] font-bold text-slate-400">...</span>`;
+        
+        document.getElementById('instModalSpecChart').innerHTML = chartHtml;
+        document.getElementById('instModalSpecLegend').innerHTML = legendHtml;
+
+        // 3. Reset del buscador
+        const searchInput = document.getElementById('instModalSearch');
+        if(searchInput) searchInput.value = '';
+
         const tbody = document.getElementById('instModalTableBody');
         tbody.innerHTML = '';
         
@@ -1747,16 +1828,21 @@
         const sortedDocs = [...inst.doctors].sort((a,b) => b.totalRx - a.totalRx);
 
         sortedDocs.forEach(d => {
+            const isKOL = d.catPotency === 'A'; // Identificar Líderes de Opinión (Alto Potencial)
+
             const tr = document.createElement('tr');
-            tr.className = "hover:bg-slate-50 transition cursor-pointer group";
-            tr.onclick = () => openDoctorModal(d.id); // Abre el modal de detalle del doctor
+            tr.className = `inst-doc-row hover:bg-slate-50 transition cursor-pointer group ${isKOL ? 'bg-amber-50/20' : ''}`;
+            tr.setAttribute('data-search', `${d.name.toLowerCase()} ${d.spec.toLowerCase()}`);
+            tr.onclick = () => openDoctorModal(d.id);
 
             let colorClass = "bg-slate-100 text-slate-600";
-            if(d.catPotency === 'A') colorClass = "bg-purple-100 text-purple-700 border border-purple-200";
+            if(isKOL) colorClass = "bg-purple-100 text-purple-700 border border-purple-200";
+
+            let kolIcon = isKOL ? `<span class="material-symbols-outlined text-amber-500 text-[14px] ml-1" title="KOL (Alto Potencial)">stars</span>` : '';
 
             tr.innerHTML = `
                 <td class="p-4"><span class="font-bold font-display text-[10px] px-2 py-1 rounded-lg ${colorClass}">${d.matrixLabel}</span></td>
-                <td class="p-4"><div class="font-bold text-xs text-slate-700 group-hover:text-blue-600 transition truncate" title="${d.name}">${d.name.substring(0,30)}</div></td>
+                <td class="p-4"><div class="font-bold text-xs ${isKOL ? 'text-amber-900' : 'text-slate-700'} group-hover:text-blue-600 transition flex items-center truncate" title="${d.name}">${d.name.substring(0,30)} ${kolIcon}</div></td>
                 <td class="p-4 text-[11px] font-medium text-slate-500">${d.spec}</td>
                 <td class="p-4 text-right font-mono font-medium text-xs text-slate-600">${formatNumber(d.totalRx)}</td>
                 <td class="p-4 text-right font-mono text-xs font-bold text-blue-600">${formatNumber(d.rxPhq)}</td>
@@ -1766,6 +1852,15 @@
         });
 
         document.getElementById('institutionModal').classList.remove('hidden');
+    }
+
+    function filterInstitutionModal() {
+        const term = document.getElementById('instModalSearch').value.toLowerCase();
+        const rows = document.querySelectorAll('.inst-doc-row');
+        rows.forEach(r => {
+            if(r.getAttribute('data-search').includes(term)) r.style.display = '';
+            else r.style.display = 'none';
+        });
     }
 
     function openDoctorModal(docId) {

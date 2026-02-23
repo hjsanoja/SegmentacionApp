@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f8fafc">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>MatrizAPP v15.5.1</title>
+    <title>MatrizAPP v16.0.0 Cloud</title>
     <!-- M3 Expressive Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230A56D1'><path d='M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h8v8h-8z'/></svg>">
     
@@ -20,11 +20,21 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
     
+    <!-- Firebase SDK (ES Modules) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, deleteDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Exponer a window para poder usarlo en nuestros scripts
+        window.firebaseModules = { initializeApp, getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, getFirestore, doc, setDoc, deleteDoc, collection, onSnapshot };
+    </script>
+
     <style>
         /* M3 Typography & Base */
         body { 
             font-family: 'Inter', sans-serif; 
-            background-color: #F0F4F8; /* M3 Surface/Background */
+            background-color: #F0F4F8; 
             -webkit-tap-highlight-color: transparent;
             user-select: none;
             -webkit-user-select: none;
@@ -49,7 +59,7 @@
         .matrix-header-row { display: flex; align-items: center; justify-content: center; font-weight: 600; color: #44474E; writing-mode: vertical-rl; transform: rotate(180deg); font-size: 0.85rem; text-transform: uppercase; gap: 4px; letter-spacing: 0.5px; }
         .summary-header-title { font-weight: 800; color: #44474E; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; text-align: center; padding: 8px; display: flex; align-items: flex-end; justify-content: center; height: 100%; }
         
-        /* M3 Cell Styles - Expressive Palette */
+        /* M3 Cell Styles */
         .matrix-cell {
             border-radius: 24px;
             padding: 16px; display: flex; flex-direction: column; 
@@ -62,17 +72,17 @@
         }
 
         /* Expressive Colors per Quadrant */
-        .cell-A_A { background-color: #C4EED0; color: #003915; } /* A+ Green */
-        .cell-A_B { background-color: #FFDDB3; color: #2E1500; } /* A Yellow/Orange */
-        .cell-A_C { background-color: #FFDAD6; color: #410002; } /* A- Red/Pink */
+        .cell-A_A { background-color: #C4EED0; color: #003915; } 
+        .cell-A_B { background-color: #FFDDB3; color: #2E1500; } 
+        .cell-A_C { background-color: #FFDAD6; color: #410002; } 
         
-        .cell-B_A { background-color: #D3E3FD; color: #001C3B; } /* B+ Light Blue */
-        .cell-B_B { background-color: #FDECA6; color: #221B00; } /* B Amber */
-        .cell-B_C { background-color: #FEE4E2; color: #3B090E; } /* B- Rose */
+        .cell-B_A { background-color: #D3E3FD; color: #001C3B; } 
+        .cell-B_B { background-color: #FDECA6; color: #221B00; } 
+        .cell-B_C { background-color: #FEE4E2; color: #3B090E; } 
         
-        .cell-C_A { background-color: #E8DEF8; color: #1D192B; } /* C+ Purple/Lilac */
-        .cell-C_B { background-color: #E0E2EC; color: #191C20; } /* C Neutral Surface */
-        .cell-C_C { background-color: #F3F4F9; color: #191C20; } /* C- Lighter Surface */
+        .cell-C_A { background-color: #E8DEF8; color: #1D192B; } 
+        .cell-C_B { background-color: #E0E2EC; color: #191C20; } 
+        .cell-C_C { background-color: #F3F4F9; color: #191C20; } 
 
         @keyframes fadePopIn { 0% { opacity: 0; transform: scale(0.9) translateY(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
 
@@ -101,7 +111,6 @@
         .checkbox-item input { margin-right: 12px; accent-color: #0A56D1; width: 18px; height: 18px; }
 
         .modal-badge { padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.5px; }
-        
         .badge-gap { background-color: #FFDAD6; color: #410002; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 0.75rem; padding: 4px 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
         input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
@@ -147,7 +156,7 @@
         /* Estilo para Scroll Horizontal en móviles */
         .responsive-table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
-        /* Toggle Switch para Vista Institucional */
+        /* Toggle Switch */
         .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
         .slider-toggle { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #C4C7C5; transition: .4s; border-radius: 24px; }
@@ -162,22 +171,23 @@
 <nav class="bg-white text-slate-800 shadow-sm fixed w-full z-50 no-print border-b border-slate-200">
     <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         <div class="flex items-center gap-3">
-            <div class="bg-blue-50 text-blue-600 p-2 rounded-xl flex items-center justify-center">
+            <div class="bg-blue-50 text-blue-600 p-2 rounded-xl flex items-center justify-center relative">
                 <span class="material-symbols-outlined text-2xl">grid_view</span>
+                <!-- Cloud Sync Indicator -->
+                <div id="cloudIndicator" class="absolute -top-1 -right-1 w-3 h-3 bg-slate-300 rounded-full border-2 border-white transition-colors" title="Estado de la Nube"></div>
             </div>
             <div class="flex flex-col justify-center">
                 <h1 class="font-display font-bold text-xl leading-tight text-slate-800 tracking-tight">MatrizAPP</h1>
-                <span class="text-[10px] text-slate-500 font-medium tracking-wide">v15.5.0 • Dev H. Sanoja</span>
+                <span class="text-[10px] text-slate-500 font-medium tracking-wide">v16.0.0 • Cloud Sync</span>
             </div>
         </div>
         <div class="flex items-center gap-2 md:gap-4">
             
-            <!-- Botón Admin Lock -->
-            <button class="text-slate-400 hover:text-slate-700 flex items-center justify-center transition p-2 rounded-full hover:bg-slate-100" onclick="authenticateAdmin()" title="Modo Administrador">
+            <button class="text-slate-400 hover:text-slate-700 flex items-center justify-center transition p-2 rounded-full hover:bg-slate-100" onclick="showAdminAuthModal()" title="Modo Administrador">
                 <span class="material-symbols-outlined text-xl" id="btnAdminLock">lock</span>
             </button>
 
-            <button class="hidden md:flex items-center gap-1 text-slate-500 hover:text-slate-800 text-sm font-semibold transition" onclick="clearSessionData()">
+            <button class="hidden md:flex items-center gap-1 text-slate-500 hover:text-slate-800 text-sm font-semibold transition" onclick="showConfirmClearModal()">
                 <span class="material-symbols-outlined text-lg">restart_alt</span> Recargar
             </button>
             <div class="h-6 w-px bg-slate-200 hidden md:block"></div>
@@ -201,7 +211,7 @@
     <!-- Loading Overlay -->
     <div id="restoringSession" class="hidden text-center py-12">
         <span class="material-symbols-outlined text-5xl text-blue-600 animate-spin">sync</span>
-        <p class="text-slate-600 text-sm mt-3 font-medium font-display" id="loadingText">Iniciando sistema...</p>
+        <p class="text-slate-600 text-sm mt-3 font-medium font-display" id="loadingText">Iniciando sistema y conectando nube...</p>
     </div>
 
     <!-- Analysis Tools Bar (Oculto para no-admins) -->
@@ -251,7 +261,7 @@
             <!-- Admin Actions Row -->
             <div class="flex justify-between items-center">
                 <button onclick="exportValidations()" class="text-xs bg-indigo-50 text-indigo-700 border border-indigo-200 px-4 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-indigo-100 transition shadow-sm">
-                    <span class="material-symbols-outlined text-[16px]">download</span> Descargar Validaciones VMs (Local)
+                    <span class="material-symbols-outlined text-[16px]">cloud_download</span> Descargar Validaciones (Nube)
                 </button>
                 <div class="text-[10px] text-slate-400 text-right leading-tight italic">
                     Ajusta los sliders para recalcular la matriz en tiempo real.
@@ -377,7 +387,7 @@
             <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-full transition shadow-md flex items-center justify-center gap-2" onclick="loadRepoData()">
                 <span class="material-symbols-outlined">sync</span> Sincronizar desde Servidor
             </button>
-            <button class="mt-6 text-sm text-slate-400 hover:text-blue-600 font-medium flex items-center justify-center gap-1 mx-auto" onclick="authenticateAdmin()">
+            <button class="mt-6 text-sm text-slate-400 hover:text-blue-600 font-medium flex items-center justify-center gap-1 mx-auto" onclick="showAdminAuthModal()">
                 <span class="material-symbols-outlined text-[16px]">admin_panel_settings</span> Activar Modo Admin
             </button>
         </div>
@@ -550,6 +560,45 @@
     </div>
 </main>
 
+<!-- Modals ... -->
+<!-- Admin Auth Modal -->
+<div class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[90] flex items-center justify-center p-4" id="adminAuthModal">
+    <div class="bg-white rounded-3xl shadow-xl w-full max-w-sm flex flex-col overflow-hidden">
+        <div class="p-5 border-b border-slate-100 bg-slate-50">
+            <h3 class="font-display font-bold text-slate-800 flex items-center gap-2">
+                <span class="material-symbols-outlined text-blue-600">admin_panel_settings</span> Acceso Administrador
+            </h3>
+        </div>
+        <div class="p-5">
+            <p class="text-xs text-slate-500 mb-4">Ingresa la clave para acceder a las opciones avanzadas y exportación global de la Nube.</p>
+            <input type="password" id="adminPwdInput" class="w-full px-4 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none mb-2" placeholder="Clave de acceso...">
+            <p id="adminAuthError" class="text-rose-500 text-xs font-bold hidden">Clave incorrecta.</p>
+        </div>
+        <div class="p-4 bg-slate-50 flex justify-end gap-2 border-t border-slate-100">
+            <button class="px-4 py-2 text-slate-500 hover:bg-slate-200 rounded-xl text-xs font-bold transition" onclick="document.getElementById('adminAuthModal').classList.add('hidden')">Cancelar</button>
+            <button class="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold shadow-sm hover:bg-blue-700 transition" onclick="processAdminAuth()">Acceder</button>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Reset Modal -->
+<div class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[90] flex items-center justify-center p-4" id="confirmResetModal">
+    <div class="bg-white rounded-3xl shadow-xl w-full max-w-sm flex flex-col overflow-hidden">
+        <div class="p-5 border-b border-rose-100 bg-rose-50">
+            <h3 class="font-display font-bold text-rose-800 flex items-center gap-2">
+                <span class="material-symbols-outlined">warning</span> ¿Borrar y Recargar?
+            </h3>
+        </div>
+        <div class="p-5">
+            <p class="text-sm text-slate-600">Esto borrará la memoria local y recargará la página. Tus validaciones en la nube están seguras, pero tendrás que procesar los archivos base nuevamente si no están en el repositorio.</p>
+        </div>
+        <div class="p-4 bg-slate-50 flex justify-end gap-2 border-t border-slate-100">
+            <button class="px-4 py-2 text-slate-500 hover:bg-slate-200 rounded-xl text-xs font-bold transition" onclick="document.getElementById('confirmResetModal').classList.add('hidden')">Cancelar</button>
+            <button class="px-4 py-2 bg-rose-600 text-white rounded-xl text-xs font-bold shadow-sm hover:bg-rose-700 transition" onclick="executeClearSession()">Borrar Memoria</button>
+        </div>
+    </div>
+</div>
+
 <!-- Upload Modal M3 -->
 <div class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4 transition-opacity" id="uploadModal">
     <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
@@ -634,7 +683,7 @@
         </div>
 
         <div class="p-6 border-t border-slate-100 bg-slate-50 flex justify-between items-center rounded-b-[2rem]">
-            <button onclick="clearSessionData()" class="text-rose-500 text-xs font-bold hover:text-rose-700 flex items-center gap-1 bg-white px-3 py-2 rounded-lg border border-rose-100 shadow-sm transition">
+            <button onclick="showConfirmClearModal()" class="text-rose-500 text-xs font-bold hover:text-rose-700 flex items-center gap-1 bg-white px-3 py-2 rounded-lg border border-rose-100 shadow-sm transition">
                 <span class="material-symbols-outlined text-[16px]">delete_forever</span> Borrar Memoria
             </button>
             <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-md transition" onclick="saveProductsConfig()">Guardar Configuración</button>
@@ -727,7 +776,7 @@
     </div>
 </div>
 
-<!-- VM Selection Modal (NEW) -->
+<!-- VM Selection Modal -->
 <div class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[90] flex items-center justify-center p-4 transition-opacity" id="vmSelectionModal">
     <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md flex flex-col max-h-[85vh]">
         <div class="p-6 border-b border-slate-100 bg-slate-50 rounded-t-[2rem]">
@@ -758,25 +807,115 @@
 </div>
 
 <script>
+    // --- FIREBASE CLOUD SETUP ---
+    let db, auth, currentUser, appId;
+    
+    // Variables de Validación (Sincronizadas con la Nube)
+    let LOCAL_VALIDATIONS = JSON.parse(localStorage.getItem('PHQ_VALIDATIONS') || '{}');
+    
+    async function initFirebase() {
+        try {
+            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+            appId = typeof __app_id !== 'undefined' ? __app_id : 'matriz-app-default';
+            
+            // Si no hay configuración (entorno local sin canvas), salimos sin error
+            if(Object.keys(firebaseConfig).length === 0) {
+                console.log("Modo Nube desactivado (Falta configuración). Se usará solo memoria local.");
+                return;
+            }
+
+            const { initializeApp, getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, getFirestore } = window.firebaseModules;
+            
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+
+            // Regla Obligatoria: Autenticación primero
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+
+            onAuthStateChanged(auth, (user) => {
+                currentUser = user;
+                if(user) {
+                    document.getElementById('cloudIndicator').classList.add('bg-green-500');
+                    document.getElementById('cloudIndicator').classList.remove('bg-slate-300');
+                    document.getElementById('cloudIndicator').title = "Conectado a la Nube";
+                    listenToCloudValidations();
+                } else {
+                    document.getElementById('cloudIndicator').classList.add('bg-rose-500');
+                    document.getElementById('cloudIndicator').classList.remove('bg-green-500');
+                    document.getElementById('cloudIndicator').title = "Nube Desconectada";
+                }
+            });
+        } catch (e) {
+            console.warn("Error inicializando Firebase:", e);
+        }
+    }
+
+    let unsubValidations = null;
+    function listenToCloudValidations() {
+        if(!currentUser || !db) return;
+        
+        const { collection, onSnapshot } = window.firebaseModules;
+        const validationsRef = collection(db, 'artifacts', appId, 'public', 'data', 'validations');
+        
+        // Regla Obligatoria: Callback de error incluido
+        unsubValidations = onSnapshot(validationsRef, (snapshot) => {
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                const key = `${data.docId}|${data.market}`;
+                
+                // Procesar datos de la nube
+                if(data.deleted) {
+                    delete LOCAL_VALIDATIONS[key];
+                } else {
+                    LOCAL_VALIDATIONS[key] = data;
+                }
+            });
+            // Guardar el estado sincronizado localmente
+            localStorage.setItem('PHQ_VALIDATIONS', JSON.stringify(LOCAL_VALIDATIONS));
+            
+            // Si el modal de un doctor está abierto, podríamos refrescarlo visualmente
+            const modal = document.getElementById('doctorDetailModal');
+            if(!modal.classList.contains('hidden')) {
+                // Pequeño truco para forzar actualización de los botones si estamos viendo uno
+                const openDocId = document.getElementById('modalDocLic').innerText;
+                if(openDocId) openDoctorModal(openDocId);
+            }
+        }, (error) => {
+            console.error("Error leyendo validaciones de la nube:", error);
+            document.getElementById('cloudIndicator').classList.add('bg-rose-500');
+        });
+    }
+
     // --- MODO ADMINISTRADOR ---
     let isAdmin = false;
 
-    function authenticateAdmin() {
+    function showAdminAuthModal() {
         if(isAdmin) { 
             isAdmin = false; 
             updateAdminUI(); 
             showToast("Modo Administrador desactivado");
             return; 
         }
-        
-        // La contraseña por defecto es admin123
-        const pwd = prompt("Ingrese la clave de administrador para acceder a configuraciones avanzadas:");
+        document.getElementById('adminPwdInput').value = '';
+        document.getElementById('adminAuthError').classList.add('hidden');
+        document.getElementById('adminAuthModal').classList.remove('hidden');
+        document.getElementById('adminPwdInput').focus();
+    }
+
+    function processAdminAuth() {
+        const pwd = document.getElementById('adminPwdInput').value;
         if(pwd === "admin123") {
             isAdmin = true;
             updateAdminUI();
             showToast("Modo Administrador activado");
-        } else if (pwd !== null) {
-            alert("Clave incorrecta. Acceso denegado.");
+            document.getElementById('adminAuthModal').classList.add('hidden');
+        } else {
+            document.getElementById('adminAuthError').classList.remove('hidden');
         }
     }
 
@@ -798,11 +937,19 @@
         }
     }
 
+    function showConfirmClearModal() {
+        document.getElementById('confirmResetModal').classList.remove('hidden');
+    }
+
+    async function executeClearSession() {
+        if(window.localforage) {
+            await localforage.clear();
+        }
+        window.location.reload();
+    }
+
     // --- CONFIGURACIÓN DE ARCHIVOS GITHUB ---
-    const CONFIG_FILES = {
-        AUDIT: 'datacloseup.csv', 
-        FICHERO: 'fichero_medico.csv'
-    };
+    const CONFIG_FILES = { AUDIT: 'datacloseup.csv', FICHERO: 'fichero_medico.csv' };
 
     // --- FORMATTERS (ES-AR Style: miles '.', decimal ',') ---
     function formatNumber(num, decimals = 0) {
@@ -827,9 +974,8 @@
     let SHOW_SUMMARIES = false;
     let groupByInstitution = false;
     
-    // Variables para la validación en campo
+    // Variables para la selección de VM
     let CURRENT_VM_NAME = localStorage.getItem('CURRENT_VM_NAME') || "";
-    let LOCAL_VALIDATIONS = JSON.parse(localStorage.getItem('PHQ_VALIDATIONS') || '{}');
     let ALL_REPS = []; // Nueva lista de todos los representantes para el modal
     let PENDING_VALIDATION = null; // Para guardar la acción mientras elige el nombre
     
@@ -858,7 +1004,7 @@
 
             if (savedAudit && savedAudit.length > 0) {
                 console.log("Restoring session from IndexedDB...");
-                safeSetText('loadingText', 'Restaurando sesión guardada...');
+                safeSetText('loadingText', 'Restaurando sesión y conectando nube...');
                 RAW_DATA = savedAudit;
                 
                 if (savedFichero) {
@@ -930,7 +1076,7 @@
             console.error("Error en carga automática:", error);
             document.getElementById('restoringSession').classList.add('hidden');
             document.getElementById('emptyState').classList.remove('hidden');
-            showToast("Error conectando con el repositorio");
+            showToast("Error conectando con el repositorio local");
         }
     }
 
@@ -970,15 +1116,6 @@
             console.log("Session saved to IndexedDB");
         } catch (e) {
             console.error("Save Error:", e);
-        }
-    }
-
-    async function clearSessionData() {
-        if(confirm("¿Estás seguro? Esto borrará la memoria y recargará la página.")) {
-            if(window.localforage) {
-                await localforage.clear();
-            }
-            window.location.reload();
         }
     }
 
@@ -1036,7 +1173,6 @@
 
     function generateSingleCellHTML(c) {
         const key = c.id.replace('cell_', ''); 
-        // Color is now purely defined by .cell-X_Y class via Expressive M3 palette
         return `
         <div class="matrix-cell group cell-${key}" id="${c.id}" onclick="filterByMatrix('${key.split('_')[0]}', '${key.split('_')[1]}')">
             <div class="cell-tooltip" id="tooltip_${key}">Top: Cargando...</div>
@@ -1111,11 +1247,14 @@
     // --- INITIALIZATION ---
     window.addEventListener('DOMContentLoaded', () => { 
         generateMatrixGridHTML(); 
-        // Sliders Init
         document.getElementById('sliderLow').value = TH_LOY_LOW;
         document.getElementById('sliderHigh').value = TH_LOY_HIGH;
         updateThresholds();
-        initStorage(); 
+        
+        // Inicializar Firebase
+        initFirebase().then(() => {
+            initStorage(); 
+        });
     });
 
     // --- Products/Config Logic ---
@@ -1123,7 +1262,6 @@
         renderProductCheckboxes();
         document.getElementById('productModal').classList.remove('hidden');
         
-        // Listen to CSV upload inside modal
         const csvInput = document.getElementById('productCsvInput');
         csvInput.onchange = (e) => {
             if(!e.target.files.length) return;
@@ -1144,7 +1282,6 @@
 
     function renderProductCheckboxes() {
         const container = document.getElementById('productChecklist');
-        // Extract all products from data + currently saved ones
         const allProds = RAW_DATA.length > 0 ? [...new Set(RAW_DATA.map(d => d.prod).filter(x=>x))] : [];
         const combined = [...new Set([...allProds, ...PHQ_PRODUCTS])].map(p=>p.toUpperCase()).sort();
 
@@ -1209,7 +1346,7 @@
             doc.setTextColor(100);
             doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 14, 28);
 
-            let data = CURRENT_TABLE_DATA; // Usar data filtrada actual
+            let data = CURRENT_TABLE_DATA; 
             if(MATRIX_FILTER) {
                  const sign = MATRIX_FILTER.loy==='C'?'-':(MATRIX_FILTER.loy==='A'?'+':'');
                  doc.text(`Filtro: Cuadrante ${MATRIX_FILTER.pot}${sign}`, 14, 34);
@@ -1278,10 +1415,11 @@
         XLSX.writeFile(wb, "Analisis_PHQ_Matrix.xlsx");
     }
 
-    // --- Función para exportar validaciones de los VMs ---
+    // --- Export Validaciones CLOUD ---
     function exportValidations() {
+        // Al estar sincronizado, LOCAL_VALIDATIONS contiene todo lo de la nube
         const vals = Object.values(LOCAL_VALIDATIONS);
-        if(vals.length === 0) { showToast("No hay validaciones registradas en este dispositivo."); return; }
+        if(vals.length === 0) { showToast("Aún no hay validaciones registradas."); return; }
         
         const exportData = vals.map(v => {
             const docInfo = PROCESSED_DATA.find(d => d.id === v.docId);
@@ -1292,15 +1430,15 @@
                 "Mercado": v.market,
                 "Validación VM": v.valClass,
                 "Visitador": v.vm,
-                "Fecha": new Date(v.date).toLocaleString()
+                "Fecha Guardado": new Date(v.date).toLocaleString()
             };
         });
 
         const ws = XLSX.utils.json_to_sheet(exportData);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Validaciones Terreno");
-        XLSX.writeFile(wb, "Validaciones_VM.xlsx");
-        showToast("Validaciones exportadas correctamente");
+        XLSX.utils.book_append_sheet(wb, ws, "Validaciones Nube");
+        XLSX.writeFile(wb, "Consolidado_Validaciones.xlsx");
+        showToast("Validaciones descargadas exitosamente");
     }
 
     function updateFileLabel(inputId, msgId) {
@@ -1342,7 +1480,6 @@
         
         html += `</tbody></table></div>`;
         
-        // Show in standard modal format, replacing its content temporarily
         const detailModal = document.getElementById('doctorDetailModal');
         safeSetText('modalDocName', "Composición de Mercado");
         safeSetText('modalDocSpec', "Ranking de Productos");
@@ -1474,11 +1611,9 @@
         const prodSel = document.getElementById('filterProduct'); prodSel.innerHTML = '<option value="all">Todos mis productos</option>';
         products.forEach(p => prodSel.innerHTML += `<option value="${p}">${p}</option>`);
 
-        // Extraer Representantes
         let repSet = new Set();
         FICHERO_MAP.forEach(rows => {
             rows.forEach(r => {
-                // Buscar columnas típicas de representante
                 const repKey = Object.keys(r).find(k => /rep|visit|visitador|nombre|agente|contact/i.test(k) && !/med|doc|pac|dir|mat/i.test(k));
                 if(repKey && r[repKey]) {
                     repSet.add(String(r[repKey]).trim().toUpperCase());
@@ -1487,7 +1622,7 @@
         });
         const repSel = document.getElementById('filterRep');
         repSel.innerHTML = '<option value="all">Todos (Fichados y No)</option>';
-        ALL_REPS = Array.from(repSet).sort(); // Guardar en variable global para el modal
+        ALL_REPS = Array.from(repSet).sort(); 
         ALL_REPS.forEach(rep => repSel.innerHTML += `<option value="${rep}">${rep}</option>`);
 
         const fillSelect = (id, key, label) => {
@@ -1583,7 +1718,6 @@
             return { ...d, totalRx: denominator, share, catLoyalty, gap, targetLabel, ficheroData };
         });
 
-        // Filter by Representative
         if (fRep !== 'all') {
             doctors = doctors.filter(d => {
                 return d.ficheroData.some(row => {
@@ -1713,21 +1847,8 @@
         resetPaginationAndRender();
     }
 
-    // --- Controladores de Paginación ---
-    function prevPage() {
-        if(currentPage > 1) {
-            currentPage--;
-            renderTable();
-        }
-    }
-
-    function nextPage() {
-        const totalItems = CURRENT_TABLE_DATA.length;
-        if(currentPage * ROWS_PER_PAGE < totalItems) {
-            currentPage++;
-            renderTable();
-        }
-    }
+    function prevPage() { if(currentPage > 1) { currentPage--; renderTable(); } }
+    function nextPage() { const totalItems = CURRENT_TABLE_DATA.length; if(currentPage * ROWS_PER_PAGE < totalItems) { currentPage++; renderTable(); } }
 
     function renderTable() {
         const tbody = document.getElementById('dataTable'); if(!tbody) return; tbody.innerHTML = '';
@@ -1739,7 +1860,6 @@
             data = data.filter(d => d.name.toLowerCase().includes(searchText) || String(d.id).toLowerCase().includes(searchText) || (d.address && d.address.toLowerCase().includes(searchText))); 
         }
 
-        // --- Lógica de Agrupación Institucional (Clustering) ---
         if(groupByInstitution) {
             const grouped = {};
             data.forEach(d => {
@@ -1749,7 +1869,7 @@
                 grouped[addr].rxPhq += d.rxPhq;
                 grouped[addr].gapSum += d.gap;
                 grouped[addr].docCount += 1;
-                grouped[addr].doctors.push(d); // Guardamos la lista de médicos de esta institución
+                grouped[addr].doctors.push(d); 
             });
             
             data = Object.values(grouped).map(g => {
@@ -1757,15 +1877,11 @@
                 let cLoy = 'C'; if(share >= TH_LOY_HIGH) cLoy = 'A'; else if(share > TH_LOY_LOW) cLoy = 'B';
                 return { ...g, share, catLoyalty: cLoy, matrixLabel: `Inst ${cLoy}`, isInst: true, gap: g.gapSum };
             });
-            // Ordenar por Rx Totales de la institución
             data.sort((a,b) => b.totalRx - a.totalRx);
         }
-        // -------------------------------------------------------
 
-        // Guardar estado actual para acceso en exportaciones o modales
         CURRENT_TABLE_DATA = data;
         
-        // Paginación Matemáticas
         const totalItems = data.length;
         const totalPages = Math.ceil(totalItems / ROWS_PER_PAGE);
         if(currentPage > totalPages && totalPages > 0) currentPage = totalPages;
@@ -1775,7 +1891,6 @@
         const endIdx = Math.min(startIdx + ROWS_PER_PAGE, totalItems);
         const pageData = data.slice(startIdx, endIdx);
 
-        // Actualizar UI de Paginación
         const btnPrev = document.getElementById('btnPrevPage');
         const btnNext = document.getElementById('btnNextPage');
         const pageInfo = document.getElementById('pageInfo');
@@ -1789,12 +1904,10 @@
         btnPrev.disabled = currentPage <= 1;
         btnNext.disabled = currentPage >= totalPages;
 
-        // Renderizado
         pageData.forEach((d, idxInPage) => {
             const tr = document.createElement('tr');
             tr.className = `hover:bg-slate-50 transition border-b border-slate-100 cursor-pointer group`;
             
-            // Determinar Acción al hacer click: Doctor vs Institución
             const realIndex = startIdx + idxInPage; 
             if(d.isInst) {
                 tr.onclick = () => openInstitutionModal(realIndex);
@@ -1849,7 +1962,6 @@
             <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-200"><strong>${formatNumber(inst.rxPhq)}</strong> Rx Lab</span>
         `;
 
-        // 1. Integración Mapa
         let mapLat = null, mapLon = null;
         for(const doc of inst.doctors) {
             if(doc.ficheroData) {
@@ -1866,7 +1978,6 @@
             mapBtnContainer.innerHTML = `<a href="https://www.google.com/maps/search/?api=1&query=${mapLat},${mapLon}" target="_blank" class="flex items-center gap-1 bg-white border border-slate-200 text-slate-600 px-2 py-0.5 rounded-lg text-[10px] font-bold hover:text-rose-600 hover:border-rose-300 transition shadow-sm"><span class="material-symbols-outlined text-[14px]">location_on</span> Ver Mapa</a>`;
         } else { mapBtnContainer.innerHTML = ''; }
 
-        // 2. Gráfico Resumen Especialidades
         const specCounts = {};
         inst.doctors.forEach(d => specCounts[d.spec] = (specCounts[d.spec] || 0) + 1);
         const specArray = Object.entries(specCounts).sort((a,b) => b[1] - a[1]);
@@ -1888,19 +1999,16 @@
         document.getElementById('instModalSpecChart').innerHTML = chartHtml;
         document.getElementById('instModalSpecLegend').innerHTML = legendHtml;
 
-        // 3. Reset del buscador
         const searchInput = document.getElementById('instModalSearch');
         if(searchInput) searchInput.value = '';
 
         const tbody = document.getElementById('instModalTableBody');
         tbody.innerHTML = '';
         
-        // Ordenamos los médicos dentro de la institución por su contribución de recetas
         const sortedDocs = [...inst.doctors].sort((a,b) => b.totalRx - a.totalRx);
 
         sortedDocs.forEach(d => {
-            const isKOL = d.catPotency === 'A'; // Identificar Líderes de Opinión (Alto Potencial)
-
+            const isKOL = d.catPotency === 'A'; 
             const tr = document.createElement('tr');
             tr.className = `inst-doc-row hover:bg-slate-50 transition cursor-pointer group ${isKOL ? 'bg-amber-50/20' : ''}`;
             tr.setAttribute('data-search', `${d.name.toLowerCase()} ${d.spec.toLowerCase()}`);
@@ -1982,21 +2090,22 @@
     function cancelVmSelection() {
         document.getElementById('vmSelectionModal').classList.add('hidden');
         PENDING_VALIDATION = null;
-        showToast("Validación cancelada");
     }
 
-    // --- LÓGICA DE VALIDACIÓN ---
-    function saveValidation(docId, market, valClass) {
+    // --- LÓGICA DE VALIDACIÓN A LA NUBE ---
+    async function saveValidation(docId, market, valClass) {
         if(!CURRENT_VM_NAME) {
             promptVmSelection(docId, market, valClass);
             return;
         }
         
         const key = `${docId}|${market}`;
+        let isDelete = false;
         
         // Si ya seleccionó la misma, la desmarcamos (toggle)
         if(LOCAL_VALIDATIONS[key] && LOCAL_VALIDATIONS[key].valClass === valClass) {
             delete LOCAL_VALIDATIONS[key];
+            isDelete = true;
         } else {
             LOCAL_VALIDATIONS[key] = {
                 docId: docId,
@@ -2007,13 +2116,34 @@
             };
         }
         
+        // Guardar Local Inmediato para UI fluida
         localStorage.setItem('PHQ_VALIDATIONS', JSON.stringify(LOCAL_VALIDATIONS));
-        openDoctorModal(docId); // Re-renderizar el modal para actualizar botones
-        showToast("Validación guardada por " + CURRENT_VM_NAME);
+        openDoctorModal(docId); 
+        
+        if(isDelete) { showToast("Validación eliminada"); } 
+        else { showToast("Validación guardada por " + CURRENT_VM_NAME); }
+
+        // Sincronizar a Firestore en la nube
+        if (currentUser && db) {
+            try {
+                const { doc, setDoc, deleteDoc } = window.firebaseModules;
+                // Sanitizar la llave para que sirva de ID seguro en la nube
+                const safeKey = key.replace(/[^a-zA-Z0-9_-]/g, '_');
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'validations', safeKey);
+                
+                if (isDelete) {
+                    await deleteDoc(docRef);
+                } else {
+                    await setDoc(docRef, LOCAL_VALIDATIONS[key]);
+                }
+            } catch(e) {
+                console.error("Error guardando en la Nube:", e);
+                showToast("Dato guardado localmente (Sin conexión a la nube)");
+            }
+        }
     }
 
     function openDoctorModal(docId) {
-        // Obtenemos los datos puros desde PROCESSED_DATA
         const doc = PROCESSED_DATA.find(d => d.id === docId); if(!doc) return;
         
         safeSetText('modalDocName', doc.name); safeSetText('modalDocSpec', doc.spec);

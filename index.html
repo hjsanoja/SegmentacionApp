@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f8fafc">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>MatrizAPP v15.4.2.1</title>
+    <title>MatrizAPP v15.5.0</title>
     <!-- M3 Expressive Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230A56D1'><path d='M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h8v8h-8z'/></svg>">
     
@@ -167,7 +167,7 @@
             </div>
             <div class="flex flex-col justify-center">
                 <h1 class="font-display font-bold text-xl leading-tight text-slate-800 tracking-tight">MatrizAPP</h1>
-                <span class="text-[10px] text-slate-500 font-medium tracking-wide">v15.4.2 • Dev H. Sanoja</span>
+                <span class="text-[10px] text-slate-500 font-medium tracking-wide">v15.5.0 • Dev H. Sanoja</span>
             </div>
         </div>
         <div class="flex items-center gap-2 md:gap-4">
@@ -206,48 +206,57 @@
 
     <!-- Analysis Tools Bar (Oculto para no-admins) -->
     <div class="bg-white border border-slate-200 p-5 rounded-3xl mb-6 flex flex-wrap gap-8 items-center shadow-sm no-print animate-fade-in hidden" id="analysisTools">
-        <div class="flex items-center gap-2 text-slate-600 mr-2 border-r border-slate-200 pr-6">
-            <span class="material-symbols-outlined text-2xl">tune</span>
-            <span class="text-xs font-bold uppercase tracking-widest">Umbrales<br><span class="text-[9px] text-slate-400 font-normal">Admin Mode</span></span>
-        </div>
+        <div class="flex flex-col gap-4 w-full">
+            <div class="flex flex-wrap items-center gap-8 border-b border-slate-100 pb-4">
+                <div class="flex items-center gap-2 text-slate-600 mr-2 border-r border-slate-200 pr-6">
+                    <span class="material-symbols-outlined text-2xl">tune</span>
+                    <span class="text-xs font-bold uppercase tracking-widest">Umbrales<br><span class="text-[9px] text-slate-400 font-normal">Admin Mode</span></span>
+                </div>
 
-        <!-- Sliders Adopción (Eje X) -->
-        <div class="flex flex-col gap-2 w-full sm:w-64">
-            <div class="flex justify-between text-[10px] font-bold text-slate-500 uppercase">
-                <span>Adopción (Loyalty)</span>
+                <!-- Sliders Adopción (Eje X) -->
+                <div class="flex flex-col gap-2 w-full sm:w-64">
+                    <div class="flex justify-between text-[10px] font-bold text-slate-500 uppercase">
+                        <span>Adopción (Loyalty)</span>
+                    </div>
+                    <div class="flex justify-between text-[10px] font-bold text-slate-400">
+                        <span>Bajo/Medio: <span id="lblThLow" class="text-blue-600">33%</span></span>
+                    </div>
+                    <input type="range" min="10" max="50" value="33" id="sliderLow" oninput="updateThresholds()">
+                    
+                    <div class="flex justify-between text-[10px] font-bold text-slate-400 mt-1">
+                        <span>Medio/Alto: <span id="lblThHigh" class="text-green-600">66%</span></span>
+                    </div>
+                    <input type="range" min="51" max="90" value="66" id="sliderHigh" oninput="updateThresholds()">
+                </div>
+
+                <div class="h-20 w-px bg-slate-200 hidden sm:block"></div>
+
+                <!-- Sliders Potencialidad (Eje Y) -->
+                <div class="flex flex-col gap-2 w-full sm:w-64">
+                     <div class="flex justify-between text-[10px] font-bold text-slate-500 uppercase">
+                        <span>Potencialidad (Volumen)</span>
+                    </div>
+                    <div class="flex justify-between text-[10px] font-bold text-slate-400">
+                        <span>Alto/Medio (A/B): <span id="lblPotLow" class="text-purple-600">33%</span></span>
+                    </div>
+                    <input type="range" min="10" max="50" value="33" id="sliderPotLow" oninput="updateThresholds()">
+                    
+                    <div class="flex justify-between text-[10px] font-bold text-slate-400 mt-1">
+                        <span>Medio/Bajo (B/C): <span id="lblPotHigh" class="text-slate-600">66%</span></span>
+                    </div>
+                    <input type="range" min="51" max="90" value="66" id="sliderPotHigh" oninput="updateThresholds()">
+                </div>
             </div>
-            <div class="flex justify-between text-[10px] font-bold text-slate-400">
-                <span>Bajo/Medio: <span id="lblThLow" class="text-blue-600">33%</span></span>
-            </div>
-            <input type="range" min="10" max="50" value="33" id="sliderLow" oninput="updateThresholds()">
             
-            <div class="flex justify-between text-[10px] font-bold text-slate-400 mt-1">
-                <span>Medio/Alto: <span id="lblThHigh" class="text-green-600">66%</span></span>
+            <!-- Admin Actions Row -->
+            <div class="flex justify-between items-center">
+                <button onclick="exportValidations()" class="text-xs bg-indigo-50 text-indigo-700 border border-indigo-200 px-4 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-indigo-100 transition shadow-sm">
+                    <span class="material-symbols-outlined text-[16px]">download</span> Descargar Validaciones VMs (Local)
+                </button>
+                <div class="text-[10px] text-slate-400 text-right leading-tight italic">
+                    Ajusta los sliders para recalcular la matriz en tiempo real.
+                </div>
             </div>
-            <input type="range" min="51" max="90" value="66" id="sliderHigh" oninput="updateThresholds()">
-        </div>
-
-        <div class="h-20 w-px bg-slate-200 hidden sm:block"></div>
-
-        <!-- Sliders Potencialidad (Eje Y) -->
-        <div class="flex flex-col gap-2 w-full sm:w-64">
-             <div class="flex justify-between text-[10px] font-bold text-slate-500 uppercase">
-                <span>Potencialidad (Volumen)</span>
-            </div>
-            <div class="flex justify-between text-[10px] font-bold text-slate-400">
-                <span>Alto/Medio (A/B): <span id="lblPotLow" class="text-purple-600">33%</span></span>
-            </div>
-            <input type="range" min="10" max="50" value="33" id="sliderPotLow" oninput="updateThresholds()">
-            
-            <div class="flex justify-between text-[10px] font-bold text-slate-400 mt-1">
-                <span>Medio/Bajo (B/C): <span id="lblPotHigh" class="text-slate-600">66%</span></span>
-            </div>
-            <input type="range" min="51" max="90" value="66" id="sliderPotHigh" oninput="updateThresholds()">
-        </div>
-        
-        <div class="flex-1"></div>
-        <div class="text-[10px] text-slate-400 max-w-[150px] text-right leading-tight italic">
-            Ajusta los sliders para recalcular la matriz en tiempo real.
         </div>
     </div>
 
@@ -685,7 +694,7 @@
     </div>
 </div>
 
-<!-- Doctor Detail Modal M3 (Aumentado Z-index a 80 para superponerse a la institución) -->
+<!-- Doctor Detail Modal M3 -->
 <div class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[80] flex items-center justify-center p-4" id="doctorDetailModal">
     <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-5xl max-h-[85vh] flex flex-col">
         <div class="p-6 md:p-8 border-b border-slate-100 bg-slate-50 flex justify-between items-start rounded-t-[2rem]">
@@ -712,7 +721,7 @@
                     </div>
                 </details>
             </div>
-            <h4 class="font-display font-bold text-slate-700 mb-4 border-b border-slate-100 pb-2">Desglose por Mercado</h4>
+            <h4 class="font-display font-bold text-slate-700 mb-4 border-b border-slate-100 pb-2">Desglose por Mercado y Validación</h4>
             <div id="modalContent" class="space-y-6"></div>
         </div>
     </div>
@@ -779,7 +788,7 @@
     let RAW_DATA = [];
     let PHQ_PRODUCTS = ["LEPRIT", "ESOZ", "FLUDIL", "TIOCOLFEN", "SULAMP", "BUMETIN", "TIOCOL", "MONUKAST", "GLUSTAR", "CANDETIQUE", "OLMETIQUE", "XAROX"]; // Default if none loaded
     let PROCESSED_DATA = [];
-    let CURRENT_TABLE_DATA = []; // Guardará el resultado final agrupado/filtrado para facilitar paginación
+    let CURRENT_TABLE_DATA = []; 
     let MATRIX_FILTER = null;
     let MARKET_LIST = []; 
     let SELECTED_MARKETS = [];
@@ -788,11 +797,15 @@
     let SHOW_SUMMARIES = false;
     let groupByInstitution = false;
     
+    // Variables para la validación en campo
+    let CURRENT_VM_NAME = localStorage.getItem('CURRENT_VM_NAME') || "";
+    let LOCAL_VALIDATIONS = JSON.parse(localStorage.getItem('PHQ_VALIDATIONS') || '{}');
+    
     // Paginación State
     let currentPage = 1;
     const ROWS_PER_PAGE = 300;
     
-    // Config States (Updated Defaults)
+    // Config States
     let TH_LOY_LOW = 33;
     let TH_LOY_HIGH = 66;
     let TH_POT_LOW = 33;
@@ -1231,6 +1244,31 @@
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Matriz PHQ");
         XLSX.writeFile(wb, "Analisis_PHQ_Matrix.xlsx");
+    }
+
+    // --- Función para exportar validaciones de los VMs ---
+    function exportValidations() {
+        const vals = Object.values(LOCAL_VALIDATIONS);
+        if(vals.length === 0) { showToast("No hay validaciones registradas en este dispositivo."); return; }
+        
+        const exportData = vals.map(v => {
+            const docInfo = PROCESSED_DATA.find(d => d.id === v.docId);
+            return {
+                "Matrícula": v.docId,
+                "Médico": docInfo ? docInfo.name : "Desconocido",
+                "Especialidad": docInfo ? docInfo.spec : "-",
+                "Mercado": v.market,
+                "Validación VM": v.valClass,
+                "Visitador": v.vm,
+                "Fecha": new Date(v.date).toLocaleString()
+            };
+        });
+
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Validaciones Terreno");
+        XLSX.writeFile(wb, "Validaciones_VM.xlsx");
+        showToast("Validaciones exportadas correctamente");
     }
 
     function updateFileLabel(inputId, msgId) {
@@ -1863,6 +1901,35 @@
         });
     }
 
+    // --- LÓGICA DE VALIDACIÓN ---
+    function saveValidation(docId, market, valClass) {
+        if(!CURRENT_VM_NAME) {
+            const name = prompt("Para validar la clasificación, por favor ingresa tu Nombre, Apellido o Código de Visitador:");
+            if(!name || name.trim() === "") return;
+            CURRENT_VM_NAME = name.trim();
+            localStorage.setItem('CURRENT_VM_NAME', CURRENT_VM_NAME);
+        }
+        
+        const key = `${docId}|${market}`;
+        
+        // Si ya seleccionó la misma, la desmarcamos (toggle)
+        if(LOCAL_VALIDATIONS[key] && LOCAL_VALIDATIONS[key].valClass === valClass) {
+            delete LOCAL_VALIDATIONS[key];
+        } else {
+            LOCAL_VALIDATIONS[key] = {
+                docId: docId,
+                market: market,
+                vm: CURRENT_VM_NAME,
+                valClass: valClass,
+                date: new Date().toISOString()
+            };
+        }
+        
+        localStorage.setItem('PHQ_VALIDATIONS', JSON.stringify(LOCAL_VALIDATIONS));
+        openDoctorModal(docId); // Re-renderizar el modal para actualizar botones
+        showToast("Validación guardada");
+    }
+
     function openDoctorModal(docId) {
         // Obtenemos los datos puros desde PROCESSED_DATA
         const doc = PROCESSED_DATA.find(d => d.id === docId); if(!doc) return;
@@ -1951,12 +2018,45 @@
             if(mktClass === 'B') mktClassBadge = `<span class="text-[10px] font-bold text-yellow-700 border border-yellow-200 bg-yellow-50 px-2 py-0.5 rounded-md">Media Adopción</span>`;
             if(mktClass === 'C') mktClassBadge = `<span class="text-[10px] font-bold text-red-700 border border-red-200 bg-red-50 px-2 py-0.5 rounded-md">Baja Adopción (-)</span>`;
 
-            mktDiv.innerHTML = `<table class="w-full text-sm table-fixed"><thead><tr class="bg-slate-50 border-b border-slate-200"><td class="p-4 w-[46%]"><div class="flex items-center gap-2"><span class="font-display font-bold text-slate-800 text-base">${mkt}</span>${mktClassBadge}</div></td><td class="p-4 text-right w-[18%]"><span class="text-slate-500 block text-[9px] font-bold uppercase tracking-widest">Total Rx</span><b class="text-slate-800 text-base font-mono">${formatNumber(mktTotal)}</b></td><td class="p-4 text-right w-[18%]"><span class="text-blue-600 block text-[9px] font-bold uppercase tracking-widest">Rx Lab</span><b class="text-blue-700 text-base font-mono">${formatNumber(mktPhq)}</b></td><td class="p-4 text-center w-[18%]"><span class="text-slate-500 block text-[9px] font-bold uppercase tracking-widest">Share</span><b class="text-slate-800 text-base">${formatNumber(mktShare, 2)}%</b></td></tr><tr class="bg-white text-slate-400 border-b border-slate-100 text-[11px] uppercase tracking-wider"><th class="p-3 text-left font-bold">Producto</th><th class="p-3 text-right font-bold">Rx Total</th><th class="p-3 text-right font-bold">Rx Lab</th><th class="p-3 text-center font-bold">Tipo</th></tr></thead><tbody class="divide-y divide-slate-100">${rows.sort((a,b)=>b.rx-a.rx).map(r => { const isMyProd = isPhq(r.prod); const rowClass = isMyProd ? 'bg-blue-50/40' : ''; const rxLabVal = isMyProd ? `<span class="font-bold text-blue-600 font-mono">${formatNumber(r.rx)}</span>` : '<span class="text-slate-300">-</span>'; const typeBadge = isMyProd ? '<span class="text-[9px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-bold">PHQ</span>' : '<span class="text-[9px] text-slate-400">Comp</span>'; return `<tr class="${rowClass} hover:bg-slate-50 transition"><td class="p-3 text-slate-700 font-medium truncate" title="${r.prod}">${r.prod}</td><td class="p-3 text-right font-mono text-slate-600">${formatNumber(r.rx)}</td><td class="p-3 text-right font-mono">${rxLabVal}</td><td class="p-3 text-center">${typeBadge}</td></tr>`; }).join('')}</tbody></table>`;
+            // Verificación de Validación Existente
+            const valKey = `${doc.id}|${mkt}`;
+            const currentVal = LOCAL_VALIDATIONS[valKey];
+            
+            const getBtnClass = (level) => {
+                const base = "px-4 py-1.5 rounded-lg text-[11px] font-bold transition shadow-sm border focus:outline-none ";
+                if(currentVal && currentVal.valClass === level) {
+                    if(level === 'A') return base + "bg-green-600 text-white border-green-700 shadow-inner scale-95";
+                    if(level === 'B') return base + "bg-yellow-500 text-white border-yellow-600 shadow-inner scale-95";
+                    if(level === 'C') return base + "bg-red-600 text-white border-red-700 shadow-inner scale-95";
+                    if(level === 'NV') return base + "bg-slate-600 text-white border-slate-700 shadow-inner scale-95";
+                }
+                return base + "bg-white text-slate-600 border-slate-300 hover:bg-slate-50 hover:border-blue-400";
+            };
+
+            const valUI = `
+                <div class="p-4 bg-slate-100/80 border-t border-slate-200 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                    <div class="text-[11px] font-bold text-slate-600 flex flex-col">
+                        <div class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[16px] text-blue-600">how_to_reg</span> 
+                            Validación de Visitador
+                        </div>
+                        ${currentVal ? `<span class="text-[10px] font-medium text-slate-500 mt-1">Validado por: <span class="text-blue-700 font-bold">${currentVal.vm}</span></span>` : '<span class="text-[9px] font-medium text-slate-400 mt-1">Sin validar aún</span>'}
+                    </div>
+                    <div class="flex gap-2 flex-wrap">
+                        <button class="${getBtnClass('A')}" onclick="saveValidation('${doc.id}', '${mkt}', 'A')">A</button>
+                        <button class="${getBtnClass('B')}" onclick="saveValidation('${doc.id}', '${mkt}', 'B')">B</button>
+                        <button class="${getBtnClass('C')}" onclick="saveValidation('${doc.id}', '${mkt}', 'C')">C</button>
+                        <div class="w-px h-6 bg-slate-300 mx-1 hidden sm:block"></div>
+                        <button class="${getBtnClass('NV')}" onclick="saveValidation('${doc.id}', '${mkt}', 'NV')">No Visitado</button>
+                    </div>
+                </div>
+            `;
+
+            mktDiv.innerHTML = `<table class="w-full text-sm table-fixed"><thead><tr class="bg-slate-50 border-b border-slate-200"><td class="p-4 w-[46%]"><div class="flex items-center gap-2"><span class="font-display font-bold text-slate-800 text-base">${mkt}</span>${mktClassBadge}</div></td><td class="p-4 text-right w-[18%]"><span class="text-slate-500 block text-[9px] font-bold uppercase tracking-widest">Total Rx</span><b class="text-slate-800 text-base font-mono">${formatNumber(mktTotal)}</b></td><td class="p-4 text-right w-[18%]"><span class="text-blue-600 block text-[9px] font-bold uppercase tracking-widest">Rx Lab</span><b class="text-blue-700 text-base font-mono">${formatNumber(mktPhq)}</b></td><td class="p-4 text-center w-[18%]"><span class="text-slate-500 block text-[9px] font-bold uppercase tracking-widest">Share</span><b class="text-slate-800 text-base">${formatNumber(mktShare, 2)}%</b></td></tr><tr class="bg-white text-slate-400 border-b border-slate-100 text-[11px] uppercase tracking-wider"><th class="p-3 text-left font-bold">Producto</th><th class="p-3 text-right font-bold">Rx Total</th><th class="p-3 text-right font-bold">Rx Lab</th><th class="p-3 text-center font-bold">Tipo</th></tr></thead><tbody class="divide-y divide-slate-100">${rows.sort((a,b)=>b.rx-a.rx).map(r => { const isMyProd = isPhq(r.prod); const rowClass = isMyProd ? 'bg-blue-50/40' : ''; const rxLabVal = isMyProd ? `<span class="font-bold text-blue-600 font-mono">${formatNumber(r.rx)}</span>` : '<span class="text-slate-300">-</span>'; const typeBadge = isMyProd ? '<span class="text-[9px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-bold">PHQ</span>' : '<span class="text-[9px] text-slate-400">Comp</span>'; return `<tr class="${rowClass} hover:bg-slate-50 transition"><td class="p-3 text-slate-700 font-medium truncate" title="${r.prod}">${r.prod}</td><td class="p-3 text-right font-mono text-slate-600">${formatNumber(r.rx)}</td><td class="p-3 text-right font-mono">${rxLabVal}</td><td class="p-3 text-center">${typeBadge}</td></tr>`; }).join('')}</tbody></table>${valUI}`;
             content.appendChild(mktDiv);
         }
         
         document.getElementById('doctorDetailModal').classList.remove('hidden');
-        document.getElementById('doctorModalBody').scrollTop = 0;
     }
 </script>
 

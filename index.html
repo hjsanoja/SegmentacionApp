@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f8fafc">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>MatrizAPP v15.4.1.5</title>
+    <title>MatrizAPP v15.4.2</title>
     <!-- M3 Expressive Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230A56D1'><path d='M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h8v8h-8z'/></svg>">
     
@@ -167,7 +167,7 @@
             </div>
             <div class="flex flex-col justify-center">
                 <h1 class="font-display font-bold text-xl leading-tight text-slate-800 tracking-tight">MatrizAPP</h1>
-                <span class="text-[10px] text-slate-500 font-medium tracking-wide">v15.4.1 • Dev H. Sanoja</span>
+                <span class="text-[10px] text-slate-500 font-medium tracking-wide">v15.4.2 • Dev H. Sanoja</span>
             </div>
         </div>
         <div class="flex items-center gap-2 md:gap-4">
@@ -260,7 +260,7 @@
             </div>
             <div class="w-full md:w-80 relative">
                 <span class="material-symbols-outlined absolute left-3 top-2.5 text-slate-400 text-sm">search</span>
-                <input type="text" id="globalSearch" placeholder="Buscar por Nombre Médico o Matrícula..." class="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-full text-sm focus:ring-2 focus:ring-blue-500 outline-none transition bg-slate-50 hover:bg-white" onkeyup="renderTable()">
+                <input type="text" id="globalSearch" placeholder="Buscar por Nombre Médico o Matrícula..." class="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-full text-sm focus:ring-2 focus:ring-blue-500 outline-none transition bg-slate-50 hover:bg-white" onkeyup="resetPaginationAndRender()">
             </div>
         </div>
         
@@ -487,7 +487,7 @@
         </div>
 
         <!-- Detail Table -->
-        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
             <div class="p-5 border-b border-slate-200 flex flex-wrap justify-between items-center bg-slate-50 gap-4">
                 <div>
                     <h3 class="font-display font-bold text-slate-800 text-lg" id="tableTitle">Directorio Analítico</h3>
@@ -508,7 +508,7 @@
                     </button>
                 </div>
             </div>
-            <div class="responsive-table-wrapper">
+            <div class="responsive-table-wrapper min-h-[400px]">
                 <table class="w-full text-left border-collapse" id="mainTable">
                     <thead class="bg-slate-200/60 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
                         <tr>
@@ -523,6 +523,19 @@
                     </thead>
                     <tbody class="text-sm divide-y divide-slate-100" id="dataTable"></tbody>
                 </table>
+            </div>
+            
+            <!-- PAGINATION CONTROLS -->
+            <div class="p-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center rounded-b-[1.5rem]" id="paginationContainer">
+                <span class="text-xs text-slate-500 font-medium" id="pageInfo">Mostrando 0 de 0</span>
+                <div class="flex gap-2">
+                    <button id="btnPrevPage" onclick="prevPage()" class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center">
+                        <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+                    </button>
+                    <button id="btnNextPage" onclick="nextPage()" class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center">
+                        <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -620,8 +633,45 @@
     </div>
 </div>
 
-<!-- Doctor Detail Modal M3 -->
-<div class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[70] flex items-center justify-center p-4" id="doctorDetailModal">
+<!-- Institution Detail Modal M3 -->
+<div class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[70] flex items-center justify-center p-4 transition-opacity" id="institutionModal">
+    <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-5xl max-h-[85vh] flex flex-col">
+        <div class="p-6 border-b border-slate-100 bg-slate-50 rounded-t-[2rem] flex justify-between items-start">
+            <div>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="material-symbols-outlined text-indigo-500 bg-indigo-100 p-1.5 rounded-lg text-lg">domain</span>
+                    <span class="text-xs font-bold text-indigo-600 uppercase tracking-widest" id="instModalCat">Institución</span>
+                </div>
+                <h3 class="text-2xl font-display font-bold text-slate-800" id="instModalName">Clínica Ejemplo</h3>
+                <p class="text-sm font-medium text-slate-500 mt-1 flex items-center gap-2" id="instModalStats">
+                    <span class="bg-white px-2 py-1 rounded border border-slate-200">0 Médicos</span>
+                </p>
+            </div>
+            <button class="text-slate-600 hover:text-rose-600 bg-slate-200 hover:bg-rose-100 p-2 rounded-full shadow-sm transition" onclick="document.getElementById('institutionModal').classList.add('hidden')"><span class="material-symbols-outlined text-[20px]">close</span></button>
+        </div>
+        
+        <div class="p-0 overflow-y-auto flex-1 bg-white">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-slate-100/50 text-[11px] font-bold text-slate-500 uppercase tracking-wider sticky top-0 z-10 shadow-sm">
+                    <tr>
+                        <th class="p-4">Matriz</th>
+                        <th class="p-4">Médico</th>
+                        <th class="p-4">Especialidad</th>
+                        <th class="p-4 text-right">Rx Totales</th>
+                        <th class="p-4 text-right text-blue-700">Rx Lab</th>
+                        <th class="p-4 text-center">Share %</th>
+                    </tr>
+                </thead>
+                <tbody class="text-sm divide-y divide-slate-100" id="instModalTableBody">
+                    <!-- Dinámico -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Doctor Detail Modal M3 (Aumentado Z-index a 80 para superponerse a la institución) -->
+<div class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[80] flex items-center justify-center p-4" id="doctorDetailModal">
     <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-5xl max-h-[85vh] flex flex-col">
         <div class="p-6 md:p-8 border-b border-slate-100 bg-slate-50 flex justify-between items-start rounded-t-[2rem]">
             <div>
@@ -714,6 +764,7 @@
     let RAW_DATA = [];
     let PHQ_PRODUCTS = ["LEPRIT", "ESOZ", "FLUDIL", "TIOCOLFEN", "SULAMP", "BUMETIN", "TIOCOL", "MONUKAST", "GLUSTAR", "CANDETIQUE", "OLMETIQUE", "XAROX"]; // Default if none loaded
     let PROCESSED_DATA = [];
+    let CURRENT_TABLE_DATA = []; // Guardará el resultado final agrupado/filtrado para facilitar paginación
     let MATRIX_FILTER = null;
     let MARKET_LIST = []; 
     let SELECTED_MARKETS = [];
@@ -721,6 +772,10 @@
     let FICHERO_MAP = new Map();
     let SHOW_SUMMARIES = false;
     let groupByInstitution = false;
+    
+    // Paginación State
+    let currentPage = 1;
+    const ROWS_PER_PAGE = 300;
     
     // Config States (Updated Defaults)
     let TH_LOY_LOW = 33;
@@ -1094,10 +1149,9 @@
             doc.setTextColor(100);
             doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 14, 28);
 
-            let data = PROCESSED_DATA;
+            let data = CURRENT_TABLE_DATA; // Usar data filtrada actual
             if(MATRIX_FILTER) {
                  const sign = MATRIX_FILTER.loy==='C'?'-':(MATRIX_FILTER.loy==='A'?'+':'');
-                 data = data.filter(d => d.catPotency === MATRIX_FILTER.pot && d.catLoyalty === MATRIX_FILTER.loy);
                  doc.text(`Filtro: Cuadrante ${MATRIX_FILTER.pot}${sign}`, 14, 34);
             } else {
                  doc.text("Filtro: Todos los registros", 14, 34);
@@ -1114,7 +1168,7 @@
 
             doc.autoTable({ 
                 startY: 40,
-                head: [['Target', 'Médico / Institución', 'Gap Rx', 'Rx Mercado', 'Rx Lab', 'Share %']], 
+                head: [['Target', groupByInstitution ? 'Institución' : 'Médico', 'Gap Rx', 'Rx Mercado', 'Rx Lab', 'Share %']], 
                 body: tableBody,
                 theme: 'grid',
                 headStyles: { fillColor: [10, 86, 209] }, 
@@ -1133,8 +1187,7 @@
     }
 
     function exportExcel() {
-        let data = PROCESSED_DATA;
-        if(MATRIX_FILTER) data = data.filter(d => d.catPotency === MATRIX_FILTER.pot && d.catLoyalty === MATRIX_FILTER.loy);
+        let data = CURRENT_TABLE_DATA;
         const exportData = data.map(d => ({ "Clasificación final": d.matrixLabel, "Médico / Institución": d.name, "Rx Faltantes": d.gap, "Recetas Totales": d.totalRx, "Recetas Lab": d.rxPhq, "Share %": parseFloat(d.share.toFixed(2)) }));
         const ws = XLSX.utils.json_to_sheet(exportData);
         const wb = XLSX.utils.book_new();
@@ -1338,12 +1391,20 @@
         fillSelect('filterGeneric', 'generic', 'Genéricos'); fillSelect('filterLab', 'lab', 'Laboratorios');
     }
 
-    function applyFilters() { aggregateAndCalculate(); }
+    function applyFilters() { 
+        resetPaginationAndRender();
+        aggregateAndCalculate(); 
+    }
+
+    function resetPaginationAndRender() {
+        currentPage = 1;
+        renderTable();
+    }
 
     function toggleInstitutionView() {
         groupByInstitution = document.getElementById('instToggle').checked;
         safeSetText('thNameCol', groupByInstitution ? "Dirección / Institución" : "Médico");
-        renderTable();
+        resetPaginationAndRender();
     }
 
     function aggregateAndCalculate() {
@@ -1516,7 +1577,7 @@
             safeSetText(`${k}_rx`, compactNum(s.rx)); safeSetText(`${k}_phq`, compactNum(s.phq));
             safeSetText(`${k}_count`, formatNumber(s.count)); safeSetText(`${k}_share`, formatNumber(share, 2)+'%');
         });
-        renderTable();
+        resetPaginationAndRender();
     }
 
     function compactNum(num) { 
@@ -1532,7 +1593,7 @@
         document.getElementById('clearFilterBtn').classList.remove('hidden');
         let sign = (loy === 'C' ? '-' : (loy === 'A' ? '+' : ''));
         safeSetText('tableSubtitle', `Filtrado: Cuadrante ${pot}${sign}`);
-        renderTable();
+        resetPaginationAndRender();
     }
 
     function clearMatrixFilter() {
@@ -1540,7 +1601,23 @@
         document.querySelectorAll('.matrix-cell').forEach(c => c.classList.remove('selected'));
         document.getElementById('clearFilterBtn').classList.add('hidden');
         safeSetText('tableSubtitle', "Mostrando todos los registros");
-        renderTable();
+        resetPaginationAndRender();
+    }
+
+    // --- Controladores de Paginación ---
+    function prevPage() {
+        if(currentPage > 1) {
+            currentPage--;
+            renderTable();
+        }
+    }
+
+    function nextPage() {
+        const totalItems = CURRENT_TABLE_DATA.length;
+        if(currentPage * ROWS_PER_PAGE < totalItems) {
+            currentPage++;
+            renderTable();
+        }
     }
 
     function renderTable() {
@@ -1558,11 +1635,12 @@
             const grouped = {};
             data.forEach(d => {
                 const addr = d.address ? String(d.address).trim().toUpperCase() : "SIN DIRECCIÓN ESPECIFICADA";
-                if(!grouped[addr]) grouped[addr] = { name: addr, totalRx: 0, rxPhq: 0, docCount: 0, spec: "Múltiple", gapSum: 0 };
+                if(!grouped[addr]) grouped[addr] = { name: addr, totalRx: 0, rxPhq: 0, docCount: 0, spec: "Múltiple", gapSum: 0, doctors: [] };
                 grouped[addr].totalRx += d.totalRx;
                 grouped[addr].rxPhq += d.rxPhq;
                 grouped[addr].gapSum += d.gap;
                 grouped[addr].docCount += 1;
+                grouped[addr].doctors.push(d); // Guardamos la lista de médicos de esta institución
             });
             
             data = Object.values(grouped).map(g => {
@@ -1575,10 +1653,45 @@
         }
         // -------------------------------------------------------
 
-        data.slice(0, 300).forEach(d => {
+        // Guardar estado actual para acceso en exportaciones o modales
+        CURRENT_TABLE_DATA = data;
+        
+        // Paginación Matemáticas
+        const totalItems = data.length;
+        const totalPages = Math.ceil(totalItems / ROWS_PER_PAGE);
+        if(currentPage > totalPages && totalPages > 0) currentPage = totalPages;
+        if(currentPage === 0 && totalPages > 0) currentPage = 1;
+        
+        const startIdx = (currentPage - 1) * ROWS_PER_PAGE;
+        const endIdx = Math.min(startIdx + ROWS_PER_PAGE, totalItems);
+        const pageData = data.slice(startIdx, endIdx);
+
+        // Actualizar UI de Paginación
+        const btnPrev = document.getElementById('btnPrevPage');
+        const btnNext = document.getElementById('btnNextPage');
+        const pageInfo = document.getElementById('pageInfo');
+        
+        if(totalItems > 0) {
+            pageInfo.innerText = `Mostrando ${startIdx + 1} - ${endIdx} de ${formatNumber(totalItems)}`;
+        } else {
+            pageInfo.innerText = "Mostrando 0 de 0";
+        }
+        
+        btnPrev.disabled = currentPage <= 1;
+        btnNext.disabled = currentPage >= totalPages;
+
+        // Renderizado
+        pageData.forEach((d, idxInPage) => {
             const tr = document.createElement('tr');
             tr.className = `hover:bg-slate-50 transition border-b border-slate-100 cursor-pointer group`;
-            if(!d.isInst) tr.onclick = () => openDoctorModal(d.id); 
+            
+            // Determinar Acción al hacer click: Doctor vs Institución
+            const realIndex = startIdx + idxInPage; 
+            if(d.isInst) {
+                tr.onclick = () => openInstitutionModal(realIndex);
+            } else {
+                tr.onclick = () => openDoctorModal(d.id); 
+            }
             
             let colorClass = "bg-slate-100 text-slate-600";
             if(d.catPotency === 'A' || (d.isInst && d.catLoyalty==='A')) colorClass = "bg-purple-100 text-purple-700 border border-purple-200";
@@ -1614,7 +1727,49 @@
         return foundKey ? obj[foundKey] : null;
     }
 
+    function openInstitutionModal(tableIndex) {
+        const inst = CURRENT_TABLE_DATA[tableIndex];
+        if(!inst || !inst.isInst) return;
+
+        safeSetText('instModalName', inst.name);
+        document.getElementById('instModalCat').innerText = `Institución - ${inst.matrixLabel}`;
+        
+        document.getElementById('instModalStats').innerHTML = `
+            <span class="bg-white px-2 py-1 rounded border border-slate-200"><strong class="text-slate-700">${inst.docCount}</strong> Médicos</span>
+            <span class="bg-white px-2 py-1 rounded border border-slate-200"><strong class="text-slate-700">${formatNumber(inst.totalRx)}</strong> Rx Totales</span>
+            <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-200"><strong>${formatNumber(inst.rxPhq)}</strong> Rx Lab</span>
+        `;
+
+        const tbody = document.getElementById('instModalTableBody');
+        tbody.innerHTML = '';
+        
+        // Ordenamos los médicos dentro de la institución por su contribución de recetas
+        const sortedDocs = [...inst.doctors].sort((a,b) => b.totalRx - a.totalRx);
+
+        sortedDocs.forEach(d => {
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-slate-50 transition cursor-pointer group";
+            tr.onclick = () => openDoctorModal(d.id); // Abre el modal de detalle del doctor
+
+            let colorClass = "bg-slate-100 text-slate-600";
+            if(d.catPotency === 'A') colorClass = "bg-purple-100 text-purple-700 border border-purple-200";
+
+            tr.innerHTML = `
+                <td class="p-4"><span class="font-bold font-display text-[10px] px-2 py-1 rounded-lg ${colorClass}">${d.matrixLabel}</span></td>
+                <td class="p-4"><div class="font-bold text-xs text-slate-700 group-hover:text-blue-600 transition truncate" title="${d.name}">${d.name.substring(0,30)}</div></td>
+                <td class="p-4 text-[11px] font-medium text-slate-500">${d.spec}</td>
+                <td class="p-4 text-right font-mono font-medium text-xs text-slate-600">${formatNumber(d.totalRx)}</td>
+                <td class="p-4 text-right font-mono text-xs font-bold text-blue-600">${formatNumber(d.rxPhq)}</td>
+                <td class="p-4 text-center text-xs font-bold text-slate-700">${formatNumber(d.share, 2)}%</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('institutionModal').classList.remove('hidden');
+    }
+
     function openDoctorModal(docId) {
+        // Obtenemos los datos puros desde PROCESSED_DATA
         const doc = PROCESSED_DATA.find(d => d.id === docId); if(!doc) return;
         
         safeSetText('modalDocName', doc.name); safeSetText('modalDocSpec', doc.spec);
